@@ -805,9 +805,9 @@ FlightCore::djiSetGImbalSpeed(float roll_rate,float pitch_rate,float yaw_rate){
 	}	
 	DJI::OSDK::Gimbal::SpeedData gimbal_speed;
 	gimbal_speed.roll=(int16_t)roll_rate*10;
-	gimbal_speed.pitch=(int16_t)pitch_rate*10
+	gimbal_speed.pitch=(int16_t)pitch_rate*10;
 	gimbal_speed.yaw=(int16_t)yaw_rate*10;
 	gimbal_speed.ignore_aircraft_motion=1;
-	_vehicle->gimbal->setAngle(&gimbal_speed);
+	_vehicle->gimbal->setSpeed(&gimbal_speed);
 	return true;
 }

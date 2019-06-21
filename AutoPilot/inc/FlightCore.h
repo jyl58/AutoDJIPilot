@@ -61,7 +61,7 @@ public:
 		bool    djiVideoStop();
 		bool	djiCameraZoom();
 		bool	djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg);
-		bool	djiSetGImbalSpeed(float,roll_rate,float pitch_rate,float yaw_rate);
+		bool	djiSetGImbalSpeed(float roll_rate,float pitch_rate,float yaw_rate);
 		
 		
 private:
