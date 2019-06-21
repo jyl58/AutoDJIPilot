@@ -1,3 +1,0 @@
-/home/jyl/auto_dji_pilot/lib/lua-5.3.5/build/CMakeFiles/rebuild_cache.dir
-/home/jyl/auto_dji_pilot/lib/lua-5.3.5/build/CMakeFiles/edit_cache.dir
-/home/jyl/auto_dji_pilot/lib/lua-5.3.5/build/CMakeFiles/LUA_LIB.dir
