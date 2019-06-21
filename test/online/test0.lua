@@ -1,0 +1,2 @@
+LuaTestMotor()
+print("test finished")

@@ -1,0 +1,10 @@
+LuaTakeoff()
+print("take off down")
+LuaTurnHead(180)
+print("reach target head point")
+LuaClimbTo(10)
+alt=LuaGetAlt()
+print("current alt:",alt)
+LuaDelay(10000) --delay 10s
+print("finish delay")
+Lualand()
