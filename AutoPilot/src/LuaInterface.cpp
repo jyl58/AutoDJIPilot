@@ -7,6 +7,7 @@
 */
 #include <string>
 #include <cmath>
+#include <sys/time.h>
 #include "LuaInterface.h"
 #include "Message.h"
 #include "PayloadBase.h"
