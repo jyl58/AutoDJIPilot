@@ -1,3 +1,6 @@
 [submodule "lib/c_library_v2"]
 	path = lib/c_library_v2
 	url = https://github.com/jyl58/c_library_v2.git
+[submodule "lib/Onboard-SDK"]
+	path = lib/Onboard-SDK
+	url = https://github.com/jyl58/Onboard-SDK.git
