@@ -100,8 +100,9 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name,bool need_n
 			_lua_script_run_thread=nullptr;
 		}
 		FLIGHTLOG("Creat a New thread for lua script run...");
-		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this,lua_file_name);
 		_lua_script_thread_running=true;
+		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this,lua_file_name);
+		
 	}else{
 		LuaParserRunThread(lua_file_name);
 	}
@@ -132,9 +133,9 @@ LuaParser::LuaParserRunThread(const std::string &lua_file_name_path){
 	FLIGHTLOG("The Lua script start Running... ");
 	if(lua_pcall(_lua,0,0,0) != LUA_OK){
 		DWAR("Run lua script err.");
-		return ;	
+	}else{
+		FLIGHTLOG("The Lua Script run Complete.");
 	}
-	FLIGHTLOG("The Lua Script run Complete.");
 	/*delete the new memery for lua script */
 	delete[] lua_script;
 	_lua_script_thread_running=false;
