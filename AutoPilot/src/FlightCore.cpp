@@ -449,7 +449,7 @@ bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in
 				usleep(20000);  //20ms
 				float z_offset_remaing=_height_fusioned-task_startAltitude;
 				//check the alt is reache 
-				if(std::fabs(target_alt_m - z_offset_remaing)< 0.3)
+				if(std::fabs(target_alt_m - z_offset_remaing)< vertical_threshold_in_m)
 					break;
 		}
 		if(_auto_running_need_break){
