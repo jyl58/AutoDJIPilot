@@ -127,6 +127,8 @@ LuaParser::LuaParserRunThread(const std::string &lua_file_name_path){
 		DWAR("Loading lua script context err.");			
 		return;
 	}
+	// clear the while loop break flag before run the lua script
+	FlightCore::djiNeedBreakAutoControl(false);
 	FLIGHTLOG("The Lua script start Running... ");
 	if(lua_pcall(_lua,0,0,0) != LUA_OK){
 		DWAR("Run lua script err.");
@@ -144,6 +146,9 @@ LuaParser::LuaInterruptRuning(const std::string& reason){
 	if(_lua_script_thread_running){
 		DWAR("Break lua script : "+reason);
 		_lua_script_thread_running=false;
+		// break while loop in the flight core class 
+		FlightCore::djiNeedBreakAutoControl(true);
+		// set lua debug hook for stop
 		lua_sethook(_lua,&LuaInterface::LuaStop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
 	}
 }

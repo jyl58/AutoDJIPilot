@@ -12,6 +12,7 @@
 #include "dji_control.hpp"
 #include "Message.h"
 #include "DJI_MAVlinkBrige.h"
+bool FlightCore::_auto_running_need_break=false;
 
 FlightCore::FlightCore(DJI::OSDK::Vehicle *vehicle)
 :_vehicle(vehicle),
@@ -442,7 +443,7 @@ bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in
 		zcmd =task_startAltitude + target_alt_m;
 		// FLY MODE flags
 		uint8_t ctrl_flag = Control::VERTICAL_POSITION;
-		while(1){
+		while(!_auto_running_need_break){
 				Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
 				_vehicle->control->flightCtrl(data);
 				usleep(20000);  //20ms
@@ -451,7 +452,11 @@ bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in
 				if(std::fabs(target_alt_m - z_offset_remaing)< 0.3)
 					break;
 		}
-		
+		if(_auto_running_need_break){
+			_auto_running_need_break=false;
+			FLIGHTLOG("Move Z by offset is breaked.");			
+			return false;	
+		}
 	}else{
 	//TODO: add m100 and m600 process
 	}
@@ -522,7 +527,7 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 		
 		// FLY MODE flags
 		uint8_t ctrl_flag = Control::HORIZONTAL_POSITION | Control::HORIZONTAL_GROUND | Control::VERTICAL_POSITION |Control::YAW_ANGLE | Control::STABLE_ENABLE;		
-		while(1){
+		while(!_auto_running_need_break){
 			
 			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
 			_vehicle->control->flightCtrl(data);
@@ -549,6 +554,11 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 			   (std::fabs(y_offset_remaing)< pos_threshold_in_m)){
 				break;
 			}
+		}
+		if(_auto_running_need_break){
+			_auto_running_need_break=false;
+			FLIGHTLOG("Move X_Y by offset is breaked.");			
+			return false;	
 		}
 		// do a emergencyBrake 
 		_vehicle->control->emergencyBrake();
@@ -597,7 +607,7 @@ bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 		float zcmd=_height_fusioned;
 		// FLY MODE flags <note>: this need z control or alt maybe change ,because turn head 
 		uint8_t ctrl_flag = Control::YAW_ANGLE | Control::VERTICAL_POSITION;
-		while(1){
+		while(!_auto_running_need_break){
 			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,target_head_deg);
 			_vehicle->control->flightCtrl(data);
 			usleep(20000);  //20ms
@@ -605,6 +615,11 @@ bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 			//check if finished turn head
 			if(std::fabs(current_yaw_in_rad*RAD2DEG-target_head_deg) < yaw_threshold_in_deg)
 				break;	
+		}
+		if(_auto_running_need_break){
+			_auto_running_need_break=false;
+			FLIGHTLOG("Trun head is breaked.");			
+			return false;	
 		}
 	}else{
 		//TODO: add m100 and m600
@@ -662,7 +677,7 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 		float ycmd=y_speed_factor;
 		float zcmd =_height_fusioned +z_speed_factor;
 		
-		while(1){
+		while(!_auto_running_need_break){
 			//send the control cmd to vehicle fc
 			_vehicle->control->positionAndYawCtrl(xcmd,ycmd,zcmd,yaw_Desired);			
 			usleep(20000);  //20ms
@@ -696,6 +711,11 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 			   std::fabs(yaw_in_rad-yaw_desired_rad)< yaw_threshold_in_rad){
 				break;
 			}
+		}
+		if(_auto_running_need_break){
+			_auto_running_need_break=false;
+			FLIGHTLOG("Move X,Y,Z by offset is breaked.");			
+			return false;	
 		}
 		// do a emergencyBrake 
 		_vehicle->control->emergencyBrake();		

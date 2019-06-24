@@ -62,6 +62,7 @@ public:
 		bool	djiCameraZoom();
 		bool	djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg);
 		bool	djiSetGImbalSpeed(float roll_rate,float pitch_rate,float yaw_rate);
+		static void	djiNeedBreakAutoControl(bool need_break){_auto_running_need_break=need_break;}
 		
 		
 private:
@@ -93,5 +94,7 @@ private:
 		std::thread* _dji_FC_link_thread=nullptr;
 		bool _thread_need_exit;
 		std::mutex *_vehicle_data_mutex=nullptr;
-		
+
+		/*break auto control running flag*/
+		static bool _auto_running_need_break;
 };

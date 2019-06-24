@@ -20,7 +20,7 @@ void GlobalPosCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserD
 	//MavlinkRouter::sendLocation(current_lat_lon.latitude*RAD2DEG,current_lat_lon.longitude*RAD2DEG,altitude_fusioned,gps_velocity.x,gps_velocity.y,gps_velocity.z);
 	FLIGHTLOG("Location: "+std::to_string(current_lat_lon.latitude*RAD2DEG)+","+std::to_string(current_lat_lon.longitude*RAD2DEG)+","+std::to_string(height_fusioned));
 }
-/* RC input callback for pyload use*/
+/* RC input callback for pyload use and break the auto fly control*/
 void RCCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
 	//check if lua script thread is runing,if not return
 	if(!LuaParser::LuaScriptThreadRunning()){
