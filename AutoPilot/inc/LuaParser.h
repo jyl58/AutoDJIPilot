@@ -17,7 +17,8 @@ public:
 	/*open lua script */
 	bool LuaScriptOpenAndRun(const std::string &lua_file_name,bool need_new_thread=false);
 	/*interrupt runing script */
-	void LuaInterruptRuning();
+	static void LuaInterruptRuning(const std::string& reason);
+	static bool LuaScriptThreadRunning(){return _lua_script_thread_running;}
 	/* get value from lua script statck*/
 	bool LuaGettableValueByIndex(const char* table_name,int index,std::string& value);
 	/*get value from lua script by name*/	
@@ -29,8 +30,10 @@ private:
 	/*flight core*/	
 	//FlightCore * _flight_core=nullptr;
 	/*lua handle*/	
-	lua_State* _lua=nullptr;
+	static lua_State* _lua;
 	/*run lua thread handle*/
-	std::thread* _lua_script_run_thread=nullptr;
+	static std::thread* _lua_script_run_thread;
+	/*lua script thread running flag*/
+	static bool _lua_script_thread_running;
 };
 

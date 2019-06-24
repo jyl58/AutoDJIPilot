@@ -99,7 +99,7 @@ bool FlightCore::flightCoreInit(){
 	//package 2: RC channel and fusion Velocity at 20 hz
 	pkgIndex				=2;
 	freq 					=20;
-	TopicName topicList20Hz[]	={ TOPIC_RC_FULL_RAW_DATA, TOPIC_VELOCITY,TOPIC_GPS_SIGNAL_LEVEL,TOPIC_RC};
+	TopicName topicList20Hz[]	={ TOPIC_RC_FULL_RAW_DATA, TOPIC_VELOCITY,TOPIC_GPS_SIGNAL_LEVEL,TOPIC_RC,TOPIC_RC_WITH_FLAG_DATA};
 	numTopic				=sizeof(topicList20Hz)/sizeof(topicList20Hz[0]);
 	enableTimestamp			=false;
 	pkgStatus				=_vehicle->subscribe->initPackageFromTopicList(pkgIndex,numTopic,topicList20Hz,enableTimestamp,freq);
@@ -451,6 +451,7 @@ bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in
 				if(std::fabs(target_alt_m - z_offset_remaing)< 0.3)
 					break;
 		}
+		
 	}else{
 	//TODO: add m100 and m600 process
 	}
@@ -703,6 +704,7 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 	}
 	return true;
 }
+
 bool FlightCore::djiArmMotor(){
 	char func[50];
 	ACK::ErrorCode cmd_status = _vehicle->control->armMotors(1);

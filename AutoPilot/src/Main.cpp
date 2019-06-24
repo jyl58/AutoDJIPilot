@@ -183,7 +183,7 @@ void SetGimbal(){
 		return;
 	}
 	if(_cmd_and_param[1].empty()){
-		std::cout<<"gimbal CMD need a argument (angle|mode)"<<std::endl;
+		std::cout<<"gimbal CMD need a argument (angle|speed)"<<std::endl;
 		return;
 	}
 
@@ -192,6 +192,8 @@ void SetGimbal(){
 		float pitch_deg=_cmd_and_param[3].empty()? 0 : std::stof(_cmd_and_param[3]);
 		float yaw_deg=_cmd_and_param[4].empty()?   0 : std::stof(_cmd_and_param[4]);
 		_flight_core->djiSetGimbalAngle(roll_deg,pitch_deg,yaw_deg);
+	}else if(_cmd_and_param[1].compare("speed") == 0){
+		//TODO: add speed 	
 	}else{
 		std::cout<<"Don't support gimbal's subcmd: "<<_cmd_and_param[1]<<std::endl;
 	}
@@ -202,7 +204,7 @@ void BreakRunLuaScript(){
 	std::string input;
 	getline(std::cin,input);
 	if(input.compare("yes")==0)*/
-	_lua_parser->LuaInterruptRuning();
+	LuaParser::LuaInterruptRuning("Console run break cmd.");
 }
 void RunLuaScript(void){
 	if(_cmd_and_param[1].empty()){
@@ -217,7 +219,11 @@ void RunLuaScript(void){
 	lua_file_handle.close();
 
 	if(_lua_parser == nullptr){
-		std::cout<<"lua script parser is not exist"<<std::endl;
+		std::cout<<"Lua script parser is not exist"<<std::endl;
+		return;
+	}
+	if(LuaParser::LuaScriptThreadRunning()){
+		std::cout<<"There is a running lua script thread ,need waiting or break it."<<std::endl;
 		return;
 	}
 	// creat a new thread for run user's lua script 

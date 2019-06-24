@@ -10,6 +10,9 @@
 #include "LuaParser.h"
 #include "LuaInterface.h"
 #include "Message.h"
+std::thread* LuaParser::_lua_script_run_thread=nullptr;
+lua_State* LuaParser::_lua=nullptr;
+bool 	LuaParser::_lua_script_thread_running=false;
 
 LuaParser::LuaParser(){
 	if(!LuaParserInit()){
@@ -85,6 +88,10 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name,bool need_n
 	// close the file 
 	lua_file.close();
 	
+	if(_lua_script_thread_running){
+		DWAR("A lua script thread is running,please waiting or break it.");
+		return false;
+	}
 	if(need_new_thread){
 		//creat a new thread for run the lua script	
 		if(_lua_script_run_thread != nullptr){
@@ -92,9 +99,9 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name,bool need_n
 			delete _lua_script_run_thread;
 			_lua_script_run_thread=nullptr;
 		}
-	  	DDBUG("Creat a New thread for lua script run...");
 		FLIGHTLOG("Creat a New thread for lua script run...");
 		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this,lua_file_name);
+		_lua_script_thread_running=true;
 	}else{
 		LuaParserRunThread(lua_file_name);
 	}
@@ -128,13 +135,17 @@ LuaParser::LuaParserRunThread(const std::string &lua_file_name_path){
 	FLIGHTLOG("The Lua Script run Complete.");
 	/*delete the new memery for lua script */
 	delete[] lua_script;
+	_lua_script_thread_running=false;
 	std::cout<<"DJI_AUTO>";
 }
 
 void 
-LuaParser::LuaInterruptRuning(){
-	if(_lua_script_run_thread != nullptr)
+LuaParser::LuaInterruptRuning(const std::string& reason){
+	if(_lua_script_thread_running){
+		DWAR("Break lua script : "+reason);
+		_lua_script_thread_running=false;
 		lua_sethook(_lua,&LuaInterface::LuaStop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
+	}
 }
 bool
 LuaParser::LuaGettableValueByIndex(const char* table_name,int index,std::string& value){

@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include "DJI_MAVlinkBrige.h"
 #include "MavlinkRouter.h"
+#include "LuaParser.h"
 #include "FlightCore.h"
 #include "Message.h"
 #include "geo.h"
 class MavlinkRouter;
+static int rc_break_auto_control_count=0; // static variable for this file
 /*send global message by mavlink to GCS */
 void GlobalPosCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
 	//get vehicle gps and alt
@@ -20,13 +22,21 @@ void GlobalPosCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserD
 }
 /* RC input callback for pyload use*/
 void RCCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
-	TypeMap<TOPIC_RC_FULL_RAW_DATA>::type 	rc_full_raw_data;
-	rc_full_raw_data	=vehicle->subscribe->getValue<TOPIC_RC_FULL_RAW_DATA>();
-	//FLIGHTLOG("RC: BT1=" +std::to_string(rc_full_raw_data.lb2.rcC1)+", BT2="+std::to_string(rc_full_raw_data.lb2.rcC2)+", Bt3="+std::to_string(rc_full_raw_data.lb2.rcD1)+", BT4="+std::to_string(rc_full_raw_data.lb2.rcD2));
-	/*TypeMap<TOPIC_RC>::type 	rc_data;
-	rc_data	=vehicle->subscribe->getValue<TOPIC_RC>();
-	std::cout<<"RC: mode="<<rc_data.mode<<std::endl;
-	std::cout<<"RC: gear="<<rc_data.gear<<std::endl;
-	std::cout<<"RC: pitch="<<rc_data.pitch<<std::endl;*/
+	//check if lua script thread is runing,if not return
+	if(!LuaParser::LuaScriptThreadRunning()){
+		return;
+	}
 
+	TypeMap<TOPIC_RC_WITH_FLAG_DATA>::type 	rc_witch_flag;
+	rc_witch_flag	=vehicle->subscribe->getValue<TOPIC_RC_WITH_FLAG_DATA>();
+	if(rc_witch_flag.roll != 0.0f || rc_witch_flag.pitch != 0.0f || rc_witch_flag.yaw != 0.0f || rc_witch_flag.throttle != 0.0f){
+		rc_break_auto_control_count++;
+	}else{
+		rc_break_auto_control_count=0;
+	}
+	// 20 hz: 50ms*60=3000ms
+	if(rc_break_auto_control_count >= 60){
+		rc_break_auto_control_count=0;
+		LuaParser::LuaInterruptRuning("RC operation.");
+	}
 }
