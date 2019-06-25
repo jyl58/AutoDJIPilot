@@ -124,7 +124,6 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool n
 }
 void 
 LuaParser::LuaParserRunThread(){
-	
 	FLIGHTLOG("The Lua script start Running... ");
 	int err_code=lua_pcall(_lua,0,0,0);
 	if(err_code != LUA_OK){
@@ -133,10 +132,6 @@ LuaParser::LuaParserRunThread(){
 		FLIGHTLOG("The lua script run Complete.");
 	}
 	_lua_script_thread_running=false;
-	
-	if(!FlightCore::djiReleaseControlAuthority()){
-		DWAR("Lua thread release ctr authority err.");	
-	}
 }
 
 void 
@@ -148,6 +143,9 @@ LuaParser::LuaInterruptRuning(const std::string& reason){
 		lua_sethook(_lua,&LuaInterface::LuaStop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
 		// break while loop in the flight core class 
 		FlightCore::djiNeedBreakAutoControl(true);
+		if(!FlightCore::djiReleaseControlAuthority()){
+			DWAR("Lua thread break release ctr authority err.");
+		}
 	}
 }
 bool
