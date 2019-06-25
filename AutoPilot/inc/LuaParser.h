@@ -15,7 +15,7 @@ public:
 	/*parser init funcion*/	
 	bool LuaParserInit();
 	/*open lua script */
-	bool LuaScriptOpenAndRun(const std::string &lua_file_name,bool need_new_thread=false);
+	bool LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool need_new_thread=false);
 	/*interrupt runing script */
 	static void LuaInterruptRuning(const std::string& reason);
 	static bool LuaScriptThreadRunning(){return _lua_script_thread_running;}
@@ -26,7 +26,7 @@ public:
 	
 private:
 	/*lua run thread*/
-	void LuaParserRunThread(const std::string &lua_file_name_path);
+	void LuaParserRunThread();
 	/*flight core*/	
 	//FlightCore * _flight_core=nullptr;
 	/*lua handle*/	

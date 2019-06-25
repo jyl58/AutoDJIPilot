@@ -25,6 +25,7 @@ void RCCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserData usr
 	
 	//check if lua script thread is runing,if not return
 	if(!LuaParser::LuaScriptThreadRunning()){
+		rc_break_auto_control_count=0;
 		return;
 	}
 	TypeMap<TOPIC_RC_WITH_FLAG_DATA>::type 	rc_witch_flag;
@@ -35,7 +36,7 @@ void RCCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserData usr
 		rc_break_auto_control_count=0;
 	}
 	// 20 hz: 50ms*40=2000ms
-	if(rc_break_auto_control_count >= 40){
+	if(rc_break_auto_control_count >= 30){
 		rc_break_auto_control_count=0;
 		LuaParser::LuaInterruptRuning("RC operation.");
 	}

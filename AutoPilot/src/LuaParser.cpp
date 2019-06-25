@@ -66,30 +66,36 @@ bool LuaParser::LuaParserInit(){
 	lua_register(_lua,"LuaSetGimbalAngle",&LuaInterface::LuaSetGimbalAngle);
 	lua_register(_lua,"LuaGetGimbalAngle",&LuaInterface::LuaGetGimbalAngle);
 	lua_register(_lua,"LuaTestMotor",&LuaInterface::LuaTestMotor);
-
+	
 	return true;
 }
 /*
 *open the lua script and run in another thread
 *param: lua file name path
 */
-bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name,bool need_new_thread){
-	//check lua file 	
-	if(lua_file_name.empty()){
-		DWAR("Lua script path is empty");
+bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool need_new_thread){
+	//check 1: lua file path valid
+	if(lua_file_name_path.empty()){
+		DWAR("Lua script path is empty.");
 		return false;
 	}
-
-	std::ifstream lua_file(lua_file_name);
-	if(!lua_file.is_open()){
-		DWAR("Can't open the Lua script file");
-		return false;
-	}
-	// close the file 
-	lua_file.close();
-	
+	// check 2: if there is a thread running  
 	if(_lua_script_thread_running){
 		DWAR("A lua script thread is running,please waiting or break it.");
+		return false;
+	}
+	//check 3: the lua parser healthy
+	int err_code=lua_status(_lua);		
+	if( err_code != LUA_OK){
+		DWAR("Lua status is not OK,err code: "+std::to_string(err_code));
+		return false;
+	}
+	// clear the all interrupt hook before run the lua script
+	lua_sethook(_lua,NULL,0,0);
+	//load lua script frome file
+	err_code=luaL_loadfile(_lua,lua_file_name_path.c_str());
+	if ( err_code != LUA_OK){
+		DWAR("Loading lua script file err,err code: "+ std::to_string(err_code));
 		return false;
 	}
 	if(need_new_thread){
@@ -99,47 +105,28 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name,bool need_n
 			delete _lua_script_run_thread;
 			_lua_script_run_thread=nullptr;
 		}
-		// clear the all interrupt hook before run the lua script
-		lua_sethook(_lua,NULL,0,0);
+		
 		// clear the while loop break flag in flight core class before run the lua script
 		FlightCore::djiNeedBreakAutoControl(false);
 		FLIGHTLOG("Creat a New thread for lua script run...");
 		_lua_script_thread_running=true;
-		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this,lua_file_name);
+		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this);
 		
 	}else{
-		LuaParserRunThread(lua_file_name);
+		LuaParserRunThread();
 	}
 	return true;
 }
 void 
-LuaParser::LuaParserRunThread(const std::string &lua_file_name_path){
-	std::ifstream lua_file(lua_file_name_path);	
-	// go to the file end 
-	lua_file.seekg(0,std::ios::end); 
-	// report the file lenght
-	int length=lua_file.tellg(); 
-	//back the file begin
-	lua_file.seekg(0,std::ios::beg); 	
-	// requst the memery
-	char* lua_script=new char[length+1]; 
-	//read the file context 
-	lua_file.read(lua_script,length);
-	// close the file 
-	lua_file.close();
-	//load lua script 
-	if (luaL_loadstring(_lua,lua_script) != LUA_OK){
-		DWAR("Loading lua script context err.");
+LuaParser::LuaParserRunThread(){
+	
+	FLIGHTLOG("The Lua script start Running... ");
+	int err_code=lua_pcall(_lua,0,0,0);
+	if(err_code != LUA_OK){
+		DWAR("Run lua script err,err code: "+ std::to_string(err_code));
 	}else{
-		FLIGHTLOG("The Lua script start Running... ");
-		if(lua_pcall(_lua,0,0,0) != LUA_OK){
-			DWAR("Run lua script err.");
-		}else{
-			FLIGHTLOG("The Lua Script run Complete.");
-		}
+		FLIGHTLOG("The lua script run Complete.");
 	}
-	/*delete the new memery for lua script */
-	delete[] lua_script;
 	_lua_script_thread_running=false;
 }
 
@@ -175,7 +162,7 @@ LuaParser::LuaGettableValueByIndex(const char* table_name,int index,std::string&
 bool
 LuaParser::LuaGettableValueByName(const char* table_name, const char* value_name, std::string& value){
 	if(_lua==nullptr){
-		DERR(" Lua state is nullptr!");
+		DERR("Lua state is nullptr!");
 		return false;
 	}		
 	lua_getglobal(_lua,table_name);

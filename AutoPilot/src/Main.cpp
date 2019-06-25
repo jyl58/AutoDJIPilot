@@ -213,7 +213,7 @@ void RunLuaScript(void){
 	}
 	std::ifstream lua_file_handle(_cmd_and_param[1]);
 	if (!lua_file_handle.is_open()){
-		std::cout<<"lua script file open err"<<std::endl;
+		std::cout<<"Lua script file open err."<<std::endl;
 		return;
 	}
 	lua_file_handle.close();
