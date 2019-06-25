@@ -168,7 +168,6 @@ bool FlightCore::flightCoreInit(){
 
 void FlightCore::readVehicleStatusThread(){
 	FLIGHTLOG("Start run flight core thread");
-	DDBUG("Start run flight core thread");
 	while(!_thread_need_exit){
 		//lock the mutex 
 		_vehicle_data_mutex->lock();

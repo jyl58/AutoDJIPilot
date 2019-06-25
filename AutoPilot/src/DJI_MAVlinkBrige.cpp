@@ -22,11 +22,11 @@ void GlobalPosCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserD
 }
 /* RC input callback for pyload use and break the auto fly control*/
 void RCCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
+	
 	//check if lua script thread is runing,if not return
 	if(!LuaParser::LuaScriptThreadRunning()){
 		return;
 	}
-
 	TypeMap<TOPIC_RC_WITH_FLAG_DATA>::type 	rc_witch_flag;
 	rc_witch_flag	=vehicle->subscribe->getValue<TOPIC_RC_WITH_FLAG_DATA>();
 	if(rc_witch_flag.roll != 0.0f || rc_witch_flag.pitch != 0.0f || rc_witch_flag.yaw != 0.0f || rc_witch_flag.throttle != 0.0f){
@@ -34,8 +34,8 @@ void RCCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserData usr
 	}else{
 		rc_break_auto_control_count=0;
 	}
-	// 20 hz: 50ms*60=3000ms
-	if(rc_break_auto_control_count >= 60){
+	// 20 hz: 50ms*40=2000ms
+	if(rc_break_auto_control_count >= 40){
 		rc_break_auto_control_count=0;
 		LuaParser::LuaInterruptRuning("RC operation.");
 	}

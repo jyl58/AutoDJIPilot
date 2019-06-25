@@ -99,6 +99,10 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name,bool need_n
 			delete _lua_script_run_thread;
 			_lua_script_run_thread=nullptr;
 		}
+		// clear the all interrupt hook before run the lua script
+		lua_sethook(_lua,NULL,0,0);
+		// clear the while loop break flag in flight core class before run the lua script
+		FlightCore::djiNeedBreakAutoControl(false);
 		FLIGHTLOG("Creat a New thread for lua script run...");
 		_lua_script_thread_running=true;
 		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this,lua_file_name);
@@ -125,21 +129,18 @@ LuaParser::LuaParserRunThread(const std::string &lua_file_name_path){
 	lua_file.close();
 	//load lua script 
 	if (luaL_loadstring(_lua,lua_script) != LUA_OK){
-		DWAR("Loading lua script context err.");			
-		return;
-	}
-	// clear the while loop break flag before run the lua script
-	FlightCore::djiNeedBreakAutoControl(false);
-	FLIGHTLOG("The Lua script start Running... ");
-	if(lua_pcall(_lua,0,0,0) != LUA_OK){
-		DWAR("Run lua script err.");
+		DWAR("Loading lua script context err.");
 	}else{
-		FLIGHTLOG("The Lua Script run Complete.");
+		FLIGHTLOG("The Lua script start Running... ");
+		if(lua_pcall(_lua,0,0,0) != LUA_OK){
+			DWAR("Run lua script err.");
+		}else{
+			FLIGHTLOG("The Lua Script run Complete.");
+		}
 	}
 	/*delete the new memery for lua script */
 	delete[] lua_script;
 	_lua_script_thread_running=false;
-	std::cout<<"DJI_AUTO>";
 }
 
 void 
@@ -147,10 +148,10 @@ LuaParser::LuaInterruptRuning(const std::string& reason){
 	if(_lua_script_thread_running){
 		DWAR("Break lua script : "+reason);
 		_lua_script_thread_running=false;
-		// break while loop in the flight core class 
-		FlightCore::djiNeedBreakAutoControl(true);
 		// set lua debug hook for stop
 		lua_sethook(_lua,&LuaInterface::LuaStop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
+		// break while loop in the flight core class 
+		FlightCore::djiNeedBreakAutoControl(true);
 	}
 }
 bool
