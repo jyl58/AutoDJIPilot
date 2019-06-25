@@ -35,8 +35,8 @@ void RCCallback(DJI::OSDK::Vehicle* vehicle,RecvContainer recvFrame,UserData usr
 	}else{
 		rc_break_auto_control_count=0;
 	}
-	// 20 hz: 50ms*40=2000ms
-	if(rc_break_auto_control_count >= 30){
+	// 20 hz: 50ms*20=1000ms
+	if(rc_break_auto_control_count >= 20){
 		rc_break_auto_control_count=0;
 		LuaParser::LuaInterruptRuning("RC operation.");
 	}
