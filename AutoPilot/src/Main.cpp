@@ -44,13 +44,13 @@ void autopilot_system_init(std::string& config_file_path){
 	if(_linux_setup == nullptr)
 		exit(1);
 
-	_flight_core	=new FlightCore(_linux_setup->getVehicle());
+	_flight_core	=new FlightCore();
 	if(_flight_core == nullptr ){
 		DERR("Creat flight core err!");
 		exit(1);
 	}
 
-	if(!_flight_core->flightCoreInit()){
+	if(!_flight_core->flightCoreInit(_linux_setup->getVehicle())){
 		DERR("Flight core init err!");
 		exit(1);
 	}

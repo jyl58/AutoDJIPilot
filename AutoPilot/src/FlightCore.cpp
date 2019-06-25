@@ -12,11 +12,12 @@
 #include "dji_control.hpp"
 #include "Message.h"
 #include "DJI_MAVlinkBrige.h"
+//init static var
 bool FlightCore::_auto_running_need_break=false;
+DJI::OSDK::Vehicle* FlightCore::_vehicle=nullptr;
 
-FlightCore::FlightCore(DJI::OSDK::Vehicle *vehicle)
-:_vehicle(vehicle),
-_thread_need_exit(false),
+FlightCore::FlightCore()
+:_thread_need_exit(false),
 _vehicle_rtk_avilable(false)
 {
 }
@@ -36,14 +37,45 @@ void FlightCore::exitDjiThread(){
 		delete _vehicle_data_mutex;
 		_vehicle_data_mutex=nullptr;
 	}
+	// release ctr authority
+	djiReleaseControlAuthority();
 }
-
-bool FlightCore::flightCoreInit(){
-	int functionTimeout=1;	
-	
+bool
+FlightCore::djiGetControlAuthority(){
+	int functionTimeout=1;
+	char func[50];
 	//get control authority
-	_vehicle->obtainCtrlAuthority(functionTimeout);
-
+	ACK::ErrorCode Status=_vehicle->obtainCtrlAuthority(functionTimeout);
+	if (ACK::getError(Status) != ACK::SUCCESS){
+		ACK::getErrorCodeMessage(Status,func);
+		std::string errmsg(func);
+		DWAR("Get control authority err: "+errmsg);	
+		return false;
+	}
+	return true;
+}
+bool
+FlightCore::djiReleaseControlAuthority(){
+	int functionTimeout=1;
+	char func[50];
+	//Release control authority
+	ACK::ErrorCode Status=_vehicle->releaseCtrlAuthority(functionTimeout);
+	if (ACK::getError(Status) != ACK::SUCCESS){
+		ACK::getErrorCodeMessage(Status,func);
+		std::string errmsg(func);
+		DWAR("Release control authority err: "+errmsg);	
+		return false;
+	}
+	return true;
+}
+bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
+	// init static _vehicle	
+	_vehicle=vehicle;
+	
+	if(!djiGetControlAuthority()){
+		return false;
+	}
+	char func[50];
 	//subcribeData
 	/* Flight status at 5 hz
 	 * Fused lat/lon at 10 hz
@@ -57,7 +89,9 @@ bool FlightCore::flightCoreInit(){
 	ACK::ErrorCode subcribeStatus;
 	subcribeStatus = _vehicle->subscribe->verify(responseTimeout);
 	if (ACK::getError(subcribeStatus) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(subcribeStatus,__func__);
+		ACK::getErrorCodeMessage(subcribeStatus,func);
+		std::string errmsg(func);
+		DWAR("Subscribe Verify err: "+errmsg);
 		return false;
 	}
 	// package 0: Subscribe to flight status, display mode ,battery info at 10 hz
@@ -73,8 +107,10 @@ bool FlightCore::flightCoreInit(){
 	}
 	subcribeStatus			=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
 	if (ACK::getError(subcribeStatus) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(subcribeStatus,__func__);
+		ACK::getErrorCodeMessage(subcribeStatus,func);
 		_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
+		std::string errmsg(func);
+		DWAR("Subscribe Start Package 0 err: "+errmsg);	
 		return false;
 	}
 	//package 1: lat/lon/alt and Velocity at 10 hz
@@ -90,8 +126,10 @@ bool FlightCore::flightCoreInit(){
 	}
 	subcribeStatus			=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
 	if (ACK::getError(subcribeStatus) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(subcribeStatus, __func__);
+		ACK::getErrorCodeMessage(subcribeStatus, func);
 		_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
+		std::string errmsg(func);
+		DWAR("Subscribe Start Package 1 err: "+errmsg);	
 		return false;
 	}
 	/*register a callback for global pos mavlink route msg*/
@@ -110,8 +148,10 @@ bool FlightCore::flightCoreInit(){
 	}
 	subcribeStatus			=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
 	if (ACK::getError(subcribeStatus) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(subcribeStatus, __func__);
+		ACK::getErrorCodeMessage(subcribeStatus, func);
 		_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
+		std::string errmsg(func);
+		DWAR("Subscribe Start Package 2 err: "+errmsg);	
 		return false;
 	}
 	_vehicle->subscribe->registerUserPackageUnpackCallback(2,RCCallback);
@@ -129,8 +169,10 @@ bool FlightCore::flightCoreInit(){
 	}
 	subcribeStatus				=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
 	if (ACK::getError(subcribeStatus) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(subcribeStatus, __func__);
+		ACK::getErrorCodeMessage(subcribeStatus, func);
 		_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
+		std::string errmsg(func);
+		DWAR("Subscribe Start Package 3 err: "+errmsg);	
 		return false;
 	}
 	
@@ -152,8 +194,10 @@ bool FlightCore::flightCoreInit(){
 	}else {
 		_vehicle_rtk_avilable=true;
 		if(ACK::getError(subcribeStatus) != ACK::SUCCESS){
-			ACK::getErrorCodeMessage(subcribeStatus,__func__);
+			ACK::getErrorCodeMessage(subcribeStatus,func);
 			_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
+			std::string errmsg(func);
+			DWAR("Subscribe Start Package 4 err: "+errmsg);	
 			return false;
 		}
 	}

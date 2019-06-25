@@ -24,9 +24,9 @@ using namespace DJI::OSDK;
 using namespace DJI::OSDK::Telemetry;
 class FlightCore{
 public:
-		FlightCore(DJI::OSDK::Vehicle* vehicle);
+		FlightCore();
 		~FlightCore();
-		bool 	flightCoreInit();
+		bool 	flightCoreInit(DJI::OSDK::Vehicle* vehicle);
 		void 	exitDjiThread();
 		/*get vehicle flight data*/
 		void 	getFlightStatus(TypeMap<TOPIC_STATUS_FLIGHT>::type *flightStatus);
@@ -62,13 +62,16 @@ public:
 		bool	djiCameraZoom();
 		bool	djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg);
 		bool	djiSetGImbalSpeed(float roll_rate,float pitch_rate,float yaw_rate);
+		static bool	djiGetControlAuthority();
+		static bool	djiReleaseControlAuthority();
 		static void	djiNeedBreakAutoControl(bool need_break){_auto_running_need_break=need_break;}
 		
 		
 private:
 		void readVehicleStatusThread();
 		/*pointer to Vehicle*/
-		DJI::OSDK::Vehicle* _vehicle=nullptr;
+		static DJI::OSDK::Vehicle* _vehicle;
+
 		bool _vehicle_rtk_avilable;
 		TypeMap<TOPIC_STATUS_FLIGHT>::type 		_flightStatus;
 		TypeMap<TOPIC_STATUS_DISPLAYMODE>::type	_display_mode;

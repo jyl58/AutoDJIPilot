@@ -108,6 +108,11 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool n
 		
 		// clear the while loop break flag in flight core class before run the lua script
 		FlightCore::djiNeedBreakAutoControl(false);
+		// get flight core ctr authority
+		if(!FlightCore::djiGetControlAuthority()){
+			DWAR("Lua thread get ctr authority err.");	
+			return false;
+		}
 		FLIGHTLOG("Creat a New thread for lua script run...");
 		_lua_script_thread_running=true;
 		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this);
@@ -128,6 +133,10 @@ LuaParser::LuaParserRunThread(){
 		FLIGHTLOG("The lua script run Complete.");
 	}
 	_lua_script_thread_running=false;
+	
+	if(!FlightCore::djiReleaseControlAuthority()){
+		DWAR("Lua thread release ctr authority err.");	
+	}
 }
 
 void 
