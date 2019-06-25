@@ -70,7 +70,7 @@ int LuaInterface::LuaGoHome(lua_State* lua){
 int LuaInterface::LuaFlyByGPS(lua_State* lua){
 	if(lua_gettop(lua) != 2){
 		DWAR("Param Need Latitude and longitude. ");
-		lua_error(lua); // interrupt run the script
+		luaL_error(lua,"Param Need Latitude and longitude."); // interrupt run the script
 		return LUA_FAIL;
 	}
 	double target_lat=luaL_checknumber(lua,1);// get the target lat
@@ -80,14 +80,14 @@ int LuaInterface::LuaFlyByGPS(lua_State* lua){
 	//check the lat and long limit	
 	if((target_lat> 90 || target_lat < -90) || (target_lon > 180 || target_lon < -180)){
 		DWAR("Latitude and longitude is out the range.");
-		lua_error(lua); // interrupt run the script
+		luaL_error(lua,"Latitude and longitude is out the range."); // interrupt run the script
 		return LUA_FAIL;
 	}
 	//do fly
 	if(!_flight_core->djiMoveByGPS(target_lat,target_lon)){
 		DWAR("Runing move by gps err.");
 		lua_pushboolean(lua,LUA_FAIL);
-		lua_error(lua); // interrupt run the script
+		luaL_error(lua,"Runing move by gps err."); // interrupt run the script
 		return LUA_FAIL;
 	}
 	lua_pushboolean(lua,LUA_SUCESS);
