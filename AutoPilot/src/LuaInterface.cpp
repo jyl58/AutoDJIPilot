@@ -118,8 +118,13 @@ int LuaInterface::LuaFlyByBearingAndDistance(lua_State* lua){
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
-	float bearing=luaL_checknumber(lua,1);// get the target vx
-	float distance=luaL_checknumber(lua,2);// get the target vx
+	float bearing=luaL_checknumber(lua,1);// get the target bearing uint:deg
+	float distance=luaL_checknumber(lua,2);// get the target distance
+	if(bearing<0 || bearing>360){
+		DWAR("Target bearing is out the range.");
+		lua_error(lua); // interrupt run the script
+		return LUA_FAIL;
+	}
 	if(!_flight_core->djiMoveByBearingAndDistance(bearing,distance)){
 		DWAR("Running move by bearing and distance err.");
 		lua_error(lua); // interrupt run the script
@@ -221,7 +226,7 @@ int LuaInterface::LuaDelay(lua_State* lua){
 }
 
 int LuaInterface::LuaGetLocationGPS(lua_State* lua){
-	TypeMap<TOPIC_GPS_FUSED>::type 			current_lat_lon;
+	TypeMap<TOPIC_GPS_FUSED>::type 		current_lat_lon;
 	TypeMap<TOPIC_HEIGHT_FUSION>::type 	altitude_fusioned;
 	_flight_core->getVehicleGPS(&current_lat_lon);
 	_flight_core->getVehicleAltitude(&altitude_fusioned);
@@ -373,7 +378,7 @@ LuaInterface::LuaGetGimbalAngle(lua_State* lua){
 */
 int 
 LuaInterface::LuaTestMotor(lua_State* lua){
-	FLIGHTLOG("Start test motor");
+	FLIGHTLOG("Start test motor.");
 	if(!_flight_core->djiArmMotor()){
 		DWAR("Start motor err.");
 		lua_error(lua); // interrupt run the script
@@ -389,6 +394,6 @@ LuaInterface::LuaTestMotor(lua_State* lua){
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
-	FLIGHTLOG("Stop test motor");
+	FLIGHTLOG("Stop test motor.");
 	return LUA_SUCESS;
 }

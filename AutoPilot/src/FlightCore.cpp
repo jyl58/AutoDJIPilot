@@ -55,7 +55,7 @@ FlightCore::djiGetControlAuthority(){
 	return true;
 }
 bool
-FlightCore::djiReleaseControlAuthority(){
+FlightCore::djiReleaseControlAuthority(){	
 	int functionTimeout=1;
 	char func[50];
 	//Release control authority

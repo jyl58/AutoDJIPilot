@@ -237,6 +237,10 @@ void LoadPayloadPlugin(){
 		DWAR("Load CMD need a param for dynamic lib path.");
 		return;
 	}
+	//close if there is a plugin
+	if(dynamic_lib_handler != nullptr)
+		dlclose(dynamic_lib_handler);
+
 	// open the user payload control plugin .so  
 	dynamic_lib_handler=dlopen(_cmd_and_param[1].c_str(),RTLD_NOW);
 	if(!dynamic_lib_handler){
@@ -283,9 +287,9 @@ const char* cmd_description[]={
 	"\t\trun the external lua script file ,need a *.lua file path as a argument.",
 	"\t\tinterrupt run the lua script ",
 	"\t\tload the user's Payload control plugin,need a *.so file path as a argument.",
-	"\t\ttake a photo",
-	"\t\tcontrol video start or stop record,need (start|stop)as a argument",
-	"\t\tset gimbal angle ,e.g.(gimbal angle 0 10 0)",
+	"\t\ttake a photo use dji camera",
+	"\t\tcontrol dji video start or stop record,need (start|stop)as a argument",
+	"\t\tset gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0)",
 	"\t\tprint this help message.",
 	"\t\texit the application."
 };

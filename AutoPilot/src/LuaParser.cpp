@@ -131,21 +131,22 @@ LuaParser::LuaParserRunThread(){
 	}else{
 		FLIGHTLOG("The lua script run Complete.");
 	}
-	_lua_script_thread_running=false;
+	if(_lua_script_thread_running){
+		_lua_script_thread_running=false;
+		if(!FlightCore::djiReleaseControlAuthority()){
+			DWAR("Lua thread release ctr authority err.");
+		}
+	}
 }
 
 void 
 LuaParser::LuaInterruptRuning(const std::string& reason){
 	if(_lua_script_thread_running){
 		DWAR("Break lua script : "+reason);
-		_lua_script_thread_running=false;
 		// set lua debug hook for stop
 		lua_sethook(_lua,&LuaInterface::LuaStop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
 		// break while loop in the flight core class 
 		FlightCore::djiNeedBreakAutoControl(true);
-		if(!FlightCore::djiReleaseControlAuthority()){
-			DWAR("Lua thread break release ctr authority err.");
-		}
 	}
 }
 bool
