@@ -618,7 +618,7 @@ FlightCore::djiMoveByBearingAndDistance(float bearing,float distance){
 	}
 	double lat;
 	double lon;
-	_waypoint_from_heading_and_distance(_current_lat_lon.latitude*RAD2DEG,_current_lat_lon.longitude*RAD2DEG,bearing,distance,&lat,&lon);
+	_waypoint_from_heading_and_distance(_current_lat_lon.latitude*RAD2DEG,_current_lat_lon.longitude*RAD2DEG,bearing*DEG2RAD,distance,&lat,&lon);
 	return djiMoveByGPS(lat,lon);
 }
 /*
