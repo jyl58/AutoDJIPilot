@@ -63,6 +63,7 @@ bool LuaParser::LuaParserInit(){
 	lua_register(_lua,"LuaShootPhoto",&LuaInterface::LuaShootPhoto);
 	lua_register(_lua,"LuaVideoStart",&LuaInterface::LuaVideoStart);
 	lua_register(_lua,"LuaVideoStop",&LuaInterface::LuaVideoStop);
+	lua_register(_lua,"LuaCameraZoom",&LuaInterface::LuaCameraZoom);
 	lua_register(_lua,"LuaSetGimbalAngle",&LuaInterface::LuaSetGimbalAngle);
 	lua_register(_lua,"LuaGetGimbalAngle",&LuaInterface::LuaGetGimbalAngle);
 	lua_register(_lua,"LuaTestMotor",&LuaInterface::LuaTestMotor);

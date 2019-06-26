@@ -259,6 +259,33 @@ void LoadPayloadPlugin(){
 		DWAR("Init Payload control dynamic lib err!");
 	}
 }
+void ZoomCamera(){
+	if(_flight_core==nullptr){
+		std::cout<<"Flight Core is't run!"<<std::endl;
+		return;
+	}
+	if(_cmd_and_param[1].empty()){
+		std::cout<<"Zoom CMD need a subcmd as argument."<<std::endl;
+		return;
+	}
+	if(_cmd_and_param[1].compare("pos")){
+		if(_cmd_and_param[2].empty()){
+			std::cout<<"Zoom pos need a value as argument.(e.g. zoom pos 500)"<<std::endl;
+			return;
+		}
+		_flight_core->djiCameraZoomByPos((uint16_t)std::stoi(_cmd_and_param[2]));
+	}else if(_cmd_and_param[1].compare("speed")){
+		if(_cmd_and_param[2].empty()){
+			std::cout<<"Zoom speed need a value as argument.(e.g. zoom speed 50)"<<std::endl;
+			return;
+		}
+		_flight_core->djiCameraZoomBySpeed((int16_t)std::stoi(_cmd_and_param[2]));
+	}else if (_cmd_and_param[1].compare("step")){
+		_flight_core->djiCameraZoomBystep((int16_t)std::stoi(_cmd_and_param[2]));
+	}else{
+		std::cout<<"Don't support zoom's subcmd: "<<_cmd_and_param[1]<<std::endl;
+	}
+}
 void ExitSystemCMD(void){
 	main_thread_need_exit=true;
 }
@@ -278,6 +305,7 @@ const CMD cmd_table[]={
 	{"photo",ShootPhoto},
 	{"video",RunVideo},
 	{"gimbal",SetGimbal},
+	{"zoom",ZoomCamera},
 	{"help",HelpCommandCMD},
 	{"exit",ExitSystemCMD}
 }; 
@@ -290,6 +318,7 @@ const char* cmd_description[]={
 	"\t\ttake a photo use dji camera",
 	"\t\tcontrol dji video start or stop record,need (start|stop)as a argument",
 	"\t\tset gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0)",
+	"\t\tzoom camera,just support z30 ,need(pos|speed|step)as a subcmd.(pos [100,3000] | speed [-100,100] |step []",
 	"\t\tprint this help message.",
 	"\t\texit the application."
 };

@@ -15,7 +15,7 @@
 #include "dji_vehicle.hpp"
 #include "dji_telemetry.hpp"
 #include "dji_status.hpp"
-
+#include "DjiCameraZoomType.h"
 #define MAX_SPEED_FACTOR 5.0
 #define BREAK_BOUNDARY 5.0
 #define MAX_PKG_COUNT 5
@@ -59,9 +59,13 @@ public:
 		bool	djiShootPhoto();
 		bool	djiVideoStart();
 		bool    djiVideoStop();
-		bool	djiCameraZoom();
 		bool	djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg);
 		bool	djiSetGImbalSpeed(float roll_rate,float pitch_rate,float yaw_rate);
+		bool	djiCameraZoomByPos(uint16_t times);
+		bool	djiCameraZoomBySpeed(int16_t speed);
+		bool	djiCameraZoomBystep(int16_t times);
+		bool	djiCameraZoom(uint16_t mode, int16_t value);
+		bool	djiCameraZoom(const camera_zoom_data_type_t *zoom);
 		static bool	djiGetControlAuthority();
 		static bool	djiReleaseControlAuthority();
 		static void	djiNeedBreakAutoControl(bool need_break){_auto_running_need_break=need_break;}

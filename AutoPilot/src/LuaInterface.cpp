@@ -313,6 +313,7 @@ int LuaInterface::LuaShootPhoto(lua_State* lua){
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
+	lua_pushboolean(lua, LUA_SUCESS);
 	return LUA_SUCESS;
 }
 int LuaInterface::LuaVideoStart(lua_State* lua){
@@ -322,6 +323,7 @@ int LuaInterface::LuaVideoStart(lua_State* lua){
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
+	lua_pushboolean(lua, LUA_SUCESS);
 	return LUA_SUCESS;
 }
 int LuaInterface::LuaVideoStop(lua_State* lua){
@@ -333,10 +335,25 @@ int LuaInterface::LuaVideoStop(lua_State* lua){
 	}
 	return LUA_SUCESS;
 }
+int LuaInterface::LuaCameraZoom(lua_State* lua){
+	if(lua_gettop(lua) != 2){
+		DWAR("Need mode and value 2 argument (deg). ");
+		lua_error(lua); // interrupt run the script
+		return LUA_FAIL;
+	}
+	int mode=luaL_checkinteger(lua,1); //get control mode
+	int value=luaL_checkinteger(lua,2); //get control value
+	if(!_flight_core->djiCameraZoom(mode,value)){
+		DWAR("Camera zoom err. ");
+		lua_error(lua); // interrupt run the script
+		return LUA_FAIL;
+	}
+	return LUA_SUCESS;
+}
 int 
 LuaInterface::LuaSetGimbalAngle(lua_State* lua){
 	if(lua_gettop(lua) != 3){
-		DWAR("Need roll,pitch,yaw 3argument (deg). ");
+		DWAR("Need roll,pitch,yaw 3 argument (deg). ");
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}

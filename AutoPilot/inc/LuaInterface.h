@@ -143,7 +143,12 @@ public:
 	*	
 	**********************************/
 	static int LuaVideoStop(lua_State* lua);
-	
+	/********************************
+	*	camera control: zoom
+	*	param mode: zoom mode, 0:step;1:pos;2;speed
+	*	param value: control value,step;pos[100,3000];speed[-100,100]
+	********************************/
+	static int LuaCameraZoom(lua_State* lua);
 	/******************************
 	*	set gimbal control
 	*

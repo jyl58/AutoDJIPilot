@@ -820,14 +820,61 @@ FlightCore::djiVideoStop(){
 	sleep(1);// waiting 2s for action
 	return true;
 }
+/*
+*	zoom the z30 camera by set zoom times 
+*	param: input times, range: (1~30)*100=(100~3000)
+*
+*/
+bool
+FlightCore::djiCameraZoomByPos(uint16_t times){
+	return djiCameraZoom(1,times);
+}
+bool
+FlightCore::djiCameraZoomBySpeed(int16_t speed){
+	return djiCameraZoom(2,speed);
+}
+bool
+FlightCore::djiCameraZoomBystep(int16_t times){
+	return djiCameraZoom(0,times);
+}
 bool	
-FlightCore::djiCameraZoom(){
-	//TODO: add zoom function,waiting dji onsdk support
+FlightCore::djiCameraZoom(uint16_t mode, int16_t value){
+	if(_gimbal_status.mountStatus == 0){
+		DWAR("Camera not mount.");
+		return false;
+	}
+	camera_zoom_data_type_t zoom_data;
+	memset(&zoom_data,0,sizeof(camera_zoom_data_type_t));
+	zoom_data.func_index = 19;
+	zoom_data.cam_index = 1;
+	zoom_data.zoom_config.optical_zoom_mode = mode;
+	zoom_data.zoom_config.optical_zoom_enable = 1;
+	if(mode ==0){
+		zoom_data.optical_zoom_param.step_param.zoom_step_level = (uint16_t)abs(value);
+		zoom_data.optical_zoom_param.step_param.zoom_step_direction = value>0? 1: 0;
+	}else if(mode ==1){
+		zoom_data.optical_zoom_param.pos_param.zoom_pos_level = (uint16_t)(abs(value)<100? 100: abs(value)>3000? 3000 : abs(value));
+	}else if(mode ==2){
+		zoom_data.optical_zoom_param.cont_param.zoom_cont_speed = (uint16_t)abs(value);
+		zoom_data.optical_zoom_param.cont_param.zoom_cont_direction = value>0? 1: 0;
+	}else{
+		DWAR("Zoom mode err.");
+		return false;	
+	}
+	djiCameraZoom(&zoom_data);
+	sleep(1);
+	return true;
+}
+bool	
+FlightCore::djiCameraZoom(const camera_zoom_data_type_t *zoom){
+	const uint8_t z30_zoom_cmd[] = {0x01, 0x30};
+	_vehicle->protocolLayer->send(2, _vehicle->getEncryption(),z30_zoom_cmd,(unsigned char*)zoom, sizeof(camera_zoom_data_type_t), 500, 2);
+	return true;
 }
 bool
 FlightCore::djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR("Gimbal not mount.");		
+		DWAR("Gimbal not mount.");
 		return false;
 	}
 	
