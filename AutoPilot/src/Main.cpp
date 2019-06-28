@@ -38,8 +38,8 @@ int main(int argc, char** argv){
 			std::cout<<"DJI_Auto>";
 			continue;	
 		}
-		//clear		
-		outMsg.clear();
+		//clear	old message  buffer
+		outMsg.str("");
 		// run cmd
 		Commander::RunCommand(outMsg);
 		//print message to terminal
