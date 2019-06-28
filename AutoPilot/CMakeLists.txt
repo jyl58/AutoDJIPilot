@@ -1,17 +1,30 @@
-##################################
+##
 # AutoPilotDJI CMakeLists.txt file
 # author: 	jiyingliang
 # email : 	jiyingliang369@126.com
 # date  :	2019.5.28
 # Modify:	
-##################################
+##
 cmake_minimum_required(VERSION 3.0)
 
 project(AutoPilotDJI)
 
 add_compile_options(-std=c++11)
 
-#find_package( REQUIRED)
+
+find_path(ev_INCLUDE_DIR NAMES ev.h )
+
+if (ev_INCLUDE_DIR AND EXISTS "${ev_INCLUDE_DIR}/ev.h")
+	message("-- Find the ev.h at ${ev_INCLUDE_DIR}/ev.h")
+endif()
+
+if (NOT ev_LIBRARIES_DIR)
+	find_library(ev_LIBRARIES_DIR NAMES libev.a)
+endif ()
+
+if(ev_LIBRARIES_DIR )
+	message("-- Find the libev.a at ${ev_LIBRARIES_DIR}")
+endif ()
 
 include_directories(
 inc/
@@ -29,6 +42,7 @@ inc/dev/
 ../lib/Onboard-SDK/osdk-core/platform/linux/inc/
 ../lib/Onboard-SDK/osdk-core/utility/inc/
 ../lib/Onboard-SDK/osdk-core/advanced-sensing-2.2.0/inc/
+${ev_INCLUDE_DIR}
 )
 
 set(SRC_LISTS 
@@ -43,10 +57,19 @@ src/LuaInterface.cpp
 src/FlightLog.cpp
 src/MavlinkRouter.cpp
 src/PayloadBase.cpp
+src/ConsoleServer.cpp
+src/Commander.cpp
 src/Main.cpp
 )
 
-add_executable(${PROJECT_NAME} ${SRC_LISTS})
-target_link_libraries(${PROJECT_NAME} lua-5.3.5 djiosdk-core -ldl)
+add_executable(${PROJECT_NAME} 
+${SRC_LISTS}
+)
+target_link_libraries(${PROJECT_NAME} 
+	lua-5.3.5 
+	djiosdk-core 
+	${ev_LIBRARIES_DIR} 
+	-ldl
+)
 
 
