@@ -14,14 +14,13 @@
 #include <netinet/in.h>
 #include "ConsoleServer.h"
 #include "Commander.h"
+
 ev_io ConsoleServer::_tcp_listen;
-ev_io ConsoleServer::_tcp_talk;
 struct ev_loop* ConsoleServer::_ev_loop=ev_default_loop(0);
 std::thread* ConsoleServer::_console_server_thread=nullptr;
 int ConsoleServer::_socket_fd;
-int ConsoleServer::_talk_link_fd;
 const std::string ConsoleServer::console_server_logo="DJI_Auto>";
-
+std::vector<socket_connect_t*> ConsoleServer::_connect_list;
 ConsoleServer::ConsoleServer(){
 
 }
@@ -34,6 +33,11 @@ ConsoleServer::~ConsoleServer(){
 		delete _console_server_thread;
 		_console_server_thread=nullptr;
 	}
+	//delete _io_list memery
+	for (int i =0;i<_connect_list.size();i++){
+		delete _connect_list[i];
+	}
+	_connect_list.clear();
 }
 bool 
 ConsoleServer::ConsoleServerInit(){
@@ -115,8 +119,9 @@ void
 ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int events){
 	struct sockaddr_in link_in;
 	socklen_t len =	sizeof(link_in);
-	_talk_link_fd = accept(sock_w->fd,(struct sockaddr*)&link_in,&len);
-	if(_talk_link_fd == -1){
+	int link_fd=0;
+	link_fd = accept(sock_w->fd,(struct sockaddr*)&link_in,&len);
+	if(link_fd == -1){
 		DWAR("Socket accept err.");
 		return;
 	}
@@ -124,19 +129,26 @@ ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int ev
 	/*if accept a link then creat a read and write event*/
 
 	// no block		
-	long flags=fcntl(_talk_link_fd,F_GETFL);
+	long flags=fcntl(link_fd,F_GETFL);
 	if( flags< 0){
 		return ;
 	}
 	flags |= O_NONBLOCK;
-	if(fcntl(_talk_link_fd,F_SETFL,flags) < 0){
+	if(fcntl(link_fd,F_SETFL,flags) < 0){
 		return ;
 	}
+	//creat a new socket connect
+	socket_connect_t* temp_connect=new socket_connect_t;
+	// append to list
+	_connect_list.push_back(temp_connect);
+	//record the index in the io_list
+	temp_connect->index=(_connect_list.size()-1);
+	temp_connect->_tcp_talk.data=temp_connect;
 	// init new event read client cmd
-	ev_io_init(&ConsoleServer::_tcp_talk,ConsoleServer::tCPRead,_talk_link_fd,EV_READ);
-	ev_io_start(main_loop,&ConsoleServer::_tcp_talk);
+	ev_io_init(&temp_connect->_tcp_talk,ConsoleServer::tCPRead,link_fd,EV_READ);
+	ev_io_start(main_loop,&temp_connect->_tcp_talk);
 	//send logo
-	send(_talk_link_fd,console_server_logo.c_str(),console_server_logo.size(),0);
+	send(link_fd,console_server_logo.c_str(),console_server_logo.size(),0);
 		
 }
 void 
@@ -154,20 +166,25 @@ ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int eve
 	}
 	//link closed by client
 	if(read_size==0){
-		close(client_r->fd);
-		ev_io_stop(main_loop,&ConsoleServer::_tcp_talk);
-		FLIGHTLOG("Disconnect link by client.");
+		closeLinkAndStopIoEvent(main_loop,client_r);
+		FLIGHTLOG("Disconnect link by client close.");
 		return;
 	}
 	
 	std::string rc_input(buffer);
-	if(rc_input.empty()){
+	//response enter("\n")
+	if(rc_input.compare("\n")==0){
 		send(client_r->fd,console_server_logo.c_str(),console_server_logo.size(),0);
 		return;	
 	}
-	
-	Commander::splitCMDAndParam(rc_input);
-	
+	//erase the last enter symbal("\n")
+	rc_input=rc_input.substr(0,rc_input.find_last_not_of("\n")+1);
+	if(!Commander::splitCMDAndParam(rc_input)){
+		std::string msg("Input command format err.\n");
+		send(client_r->fd,msg.c_str(),msg.size(),0);
+		send(client_r->fd,console_server_logo.c_str(),console_server_logo.size(),0);
+		return;
+	}
 	std::ostringstream outMsg(std::ios::app);
 	outMsg.clear();
 	// run cmd
@@ -178,10 +195,22 @@ ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int eve
 	outMsg.seekp(0,std::ios::beg);
 	//send cmmd return message to tcp
 	send(client_r->fd,(void*)outMsg.str().c_str(),len,0);
-	if(Commander::main_thread_need_exit){
-		close(client_r->fd);
-		ev_io_stop(main_loop,&ConsoleServer::_tcp_talk);
-		FLIGHTLOG("Disconnect link.");
+	send(client_r->fd,console_server_logo.c_str(),console_server_logo.size(),0);
+	if(Commander::tcp_link_need_disconnect){
+		closeLinkAndStopIoEvent(main_loop,client_r);
+		FLIGHTLOG("Disconnect link by cmd.");
 	}
 }
-
+void 
+ConsoleServer::closeLinkAndStopIoEvent(struct ev_loop* main_loop,ev_io* need_release_io){
+	socket_connect_t *curent_connect=(socket_connect_t*)need_release_io->data;
+	// close tcp link
+	close(need_release_io->fd);
+	//stop io poll event
+	ev_io_stop(main_loop,need_release_io);
+	//delete new heap 
+	delete _connect_list[curent_connect->index];
+	// remove from list
+	_connect_list.erase(_connect_list.begin()+curent_connect->index);
+		
+}

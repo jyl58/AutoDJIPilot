@@ -1,5 +1,5 @@
 /*
-* @file FlightCore.h
+* @file ConsoleServer.h
 * @author: JYL
 * @email:jiyingliang369@126.com
 * @date: 2019.06.26
@@ -17,12 +17,10 @@
 #define SERVICE_PORT "63210"
 #define TCP_BUFFER_MAX_SIZE 2048
 
-struct socket_conn_t{
-	struct ev_loop *loop;
-	ev_io	read_w;
-	//ev_io	write_w;
-	ev_io	time_w;
-};
+typedef struct SOCKET_COONECT{
+	ev_io	_tcp_talk;
+	int index;
+}socket_connect_t;
 class ConsoleServer{
 public:
 	ConsoleServer();
@@ -34,12 +32,13 @@ private:
 	static void tCPAcceptCallback(struct ev_loop* main_loop, struct ev_io* sock_w,int events);
 	static void tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int events);
 	static void tCPWrite(struct ev_loop* main_loop, struct ev_io* client_w,int events);
+	static void closeLinkAndStopIoEvent(struct ev_loop* main_loop,ev_io* need_release_io);
 
 	static std::thread* _console_server_thread;
 	/*ev*/
 	static struct ev_loop* _ev_loop;
 	static ev_io _tcp_listen;
-	static ev_io _tcp_talk;
+	static std::vector<socket_connect_t*> _connect_list;
 
 	/*socket*/
 	static int _socket_fd;
