@@ -45,7 +45,7 @@ const char* Commander::cmd_description[]={
 	"\t\tset gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0)",
 	"\t\tzoom camera,just support z30 ,need(pos|speed|step)as a subcmd.(pos [100,3000] | speed [-100,100] |step []",
 	"\t\tprint this help message.",
-	"\t\texit the application or disconnect link."
+	"\t\texit the application."
 };
 
 void 
