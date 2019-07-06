@@ -149,7 +149,6 @@ ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int ev
 	ev_io_start(main_loop,&temp_connect->_tcp_talk);
 	//send logo
 	send(link_fd,console_server_logo.c_str(),console_server_logo.size(),0);
-		
 }
 void 
 ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int events){

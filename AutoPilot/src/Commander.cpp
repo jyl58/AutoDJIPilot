@@ -37,15 +37,15 @@ const command_function_t Commander::cmd_table[]={
 const char* Commander::cmd_description[]={
 	"\t\tPrint the Vehicle and gimbal status.",
 	"\t\tPrint the input config message in config.lua file.",
-	"\t\trun the external lua script file ,need a *.lua file path as a argument.",
-	"\t\tinterrupt run the lua script ",
-	"\t\tload the user's Payload control plugin,need a *.so file path as a argument.",
-	"\t\ttake a photo use dji camera",
-	"\t\tcontrol dji video start or stop record,need (start|stop)as a argument",
-	"\t\tset gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0)",
-	"\t\tzoom camera,just support z30 ,need(pos|speed|step)as a subcmd.(pos [100,3000] | speed [-100,100] |step []",
-	"\t\tprint this help message.",
-	"\t\texit the application."
+	"\t\tRun the external lua script file ,need a *.lua file path as a argument.",
+	"\t\tInterrupt run the lua script ",
+	"\t\tLoad the user's Payload control plugin,need a *.so file path as a argument.",
+	"\t\tTake a photo use dji camera",
+	"\t\tControl dji video start or stop record,need (start|stop)as a argument",
+	"\t\tSet gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0)",
+	"\t\tZoom camera,just support z30 ,need(pos|speed|step)as a subcmd.(pos [100,3000] | speed [-100,100] |step []",
+	"\t\tPrint this help message.",
+	"\t\tExit the application."
 };
 
 void 
