@@ -9,8 +9,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(AutoPilotDJI)
 
-add_compile_options(-std=c++11)
-
+add_compile_options(-std=c++11 )
 
 find_path(ev_INCLUDE_DIR NAMES ev.h )
 
@@ -19,7 +18,7 @@ if (ev_INCLUDE_DIR AND EXISTS "${ev_INCLUDE_DIR}/ev.h")
 endif()
 
 if (NOT ev_LIBRARIES_DIR)
-	find_library(ev_LIBRARIES_DIR NAMES libev.a)
+	find_library(ev_LIBRARIES_DIR NAMES libev.so)
 endif ()
 
 if(ev_LIBRARIES_DIR )
@@ -69,7 +68,7 @@ target_link_libraries(${PROJECT_NAME}
 	lua-5.3.5 
 	djiosdk-core 
 	${ev_LIBRARIES_DIR} 
-	-ldl
+	-ldl 
 )
 
 
