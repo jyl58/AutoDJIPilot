@@ -19,7 +19,6 @@ LinuxSetup::LinuxSetup(LuaParser* lua_parser_pointer,const std::string& config_f
 	this->useAdvancedSensing  = enableAdvancedSensing;
 
 	setupEnvironment(lua_parser_pointer,config_file_path);
-	initVehicle();
 }
 
 LinuxSetup::~LinuxSetup(){
