@@ -16,7 +16,9 @@
 #include "dji_telemetry.hpp"
 #include "dji_status.hpp"
 #include "DjiCameraZoomType.h"
+
 #define MAX_SPEED_FACTOR 5.0
+#define MIN_SPEED_FACTOR 0.3
 #define BREAK_BOUNDARY 5.0
 #define MAX_PKG_COUNT 5
 

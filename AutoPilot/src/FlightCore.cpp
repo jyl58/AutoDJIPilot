@@ -44,6 +44,10 @@ bool
 FlightCore::djiGetControlAuthority(){
 	int functionTimeout=1;
 	char func[50];
+	if(_vehicle == nullptr){
+		DWAR("Vehicle pointer is nullptr.");	
+		return false;
+	}
 	//get control authority
 	ACK::ErrorCode Status=_vehicle->obtainCtrlAuthority(functionTimeout);
 	if (ACK::getError(Status) != ACK::SUCCESS){
@@ -58,6 +62,10 @@ bool
 FlightCore::djiReleaseControlAuthority(){	
 	int functionTimeout=1;
 	char func[50];
+	if(_vehicle == nullptr){
+		DWAR("Vehicle pointer is nullptr.");	
+		return false;
+	}
 	//Release control authority
 	ACK::ErrorCode Status=_vehicle->releaseCtrlAuthority(functionTimeout);
 	if (ACK::getError(Status) != ACK::SUCCESS){
@@ -542,67 +550,57 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 	//record the start point
 	TypeMap<TOPIC_GPS_FUSED>::type task_startPoint=_current_lat_lon;
 	TypeMap<TOPIC_GPS_FUSED>::type current_lat_lon;
-	getVehicleGPS(&current_lat_lon);
-
+	
 	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
 		Telemetry::Vector3f localoffset;
-		localOffsetFromGPSOffset(localoffset, static_cast<void*>(&current_lat_lon), static_cast<void*>(&task_startPoint));
-		//get the initial offset we will update in loop		
-		float x_offset_remaing=target_x_m-localoffset.x;
-		float y_offset_remaing=target_y_m-localoffset.y;
-		
 		float x_speed_factor=0;
 		float y_speed_factor=0;
-		
-		float distance=sqrtf(powf(x_offset_remaing,2)+powf(y_offset_remaing,2));
-		float v_factor=distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY; 
-		if(distance>0.01){
-			x_speed_factor=v_factor*(x_offset_remaing/distance);
-			y_speed_factor=v_factor*(y_offset_remaing/distance);
-		}else{
-			x_speed_factor=0;
-			y_speed_factor=0;
-		}
-		float xcmd=x_speed_factor;
-		float ycmd=y_speed_factor;
-		float zcmd=_height_fusioned; // at same height fly
-		float yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z; // hold the head 
-		
 		// FLY MODE flags
 		uint8_t ctrl_flag = Control::HORIZONTAL_POSITION | Control::HORIZONTAL_GROUND | Control::VERTICAL_POSITION |Control::YAW_ANGLE | Control::STABLE_ENABLE;		
-		while(!_auto_running_need_break){
-			
-			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
-			_vehicle->control->flightCtrl(data);
-			usleep(20000);  //20ms
-			//GET current gps 
+		do{
+			//get the new local pos
 			getVehicleGPS(&current_lat_lon);
+			//
 			localOffsetFromGPSOffset(localoffset, static_cast<void*>(&current_lat_lon), static_cast<void*>(&task_startPoint));
-			x_offset_remaing=target_x_m - localoffset.x;
-			y_offset_remaing=target_y_m - localoffset.y;
+			//get the initial offset we will update in loop		
+			float x_offset_remaing=target_x_m-localoffset.x;
+			float y_offset_remaing=target_y_m-localoffset.y;
 			
-			distance=sqrtf(powf(x_offset_remaing,2)+powf(y_offset_remaing,2));
-			v_factor=distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY; 
-			if(distance>0.01){
-				x_speed_factor=v_factor*(x_offset_remaing/distance); //x speed direct
-				y_speed_factor=v_factor*(y_offset_remaing/distance); //y speed direct
-			}else{
-				x_speed_factor=0;
-				y_speed_factor=0;
-			}
-			xcmd=x_speed_factor;
-			ycmd=y_speed_factor;
 			//check reached the threshold 
 			if((std::fabs(x_offset_remaing)< pos_threshold_in_m ) && 
 			   (std::fabs(y_offset_remaing)< pos_threshold_in_m)){
 				break;
 			}
-		}
-		if(_auto_running_need_break){
-			_auto_running_need_break=false;
-			FLIGHTLOG("Move X_Y by offset is breaked.");			
-			return false;	
-		}
+			//flight interrupt by ext
+			if(_auto_running_need_break){
+				_auto_running_need_break=false;
+				FLIGHTLOG("Move X_Y by offset is breaked.");			
+				return false;	
+			}
+			//distance to target point,
+			float distance = sqrtf(powf(x_offset_remaing,2)+powf(y_offset_remaing,2));
+			float v_factor = distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY;
+			//limit the min value
+			if(v_factor < MIN_SPEED_FACTOR){
+				v_factor=MIN_SPEED_FACTOR;
+			}
+			if(distance>0.01){
+				x_speed_factor=v_factor*(x_offset_remaing/distance);
+				y_speed_factor=v_factor*(y_offset_remaing/distance);
+			}else{
+				x_speed_factor=0;
+				y_speed_factor=0;
+			}
+			float xcmd=x_speed_factor;
+			float ycmd=y_speed_factor;
+			float zcmd=_height_fusioned; // at same height fly
+			float yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z; // hold the head 
+
+			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
+			_vehicle->control->flightCtrl(data);
+			usleep(20000);  //20ms
+		}while(!_auto_running_need_break);
+		
 		// do a emergencyBrake 
 		_vehicle->control->emergencyBrake();
 	}else{
@@ -688,78 +686,55 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 	TypeMap<TOPIC_GPS_FUSED>::type 		task_startPoint		=_current_lat_lon;
 	TypeMap<TOPIC_HEIGHT_FUSION>::type 	task_startAltitude	=_height_fusioned;
 	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		 		
-		localOffsetFromGPSOffset(localoffset, static_cast<void*>(&_current_lat_lon), static_cast<void*>(&task_startPoint));
-		localoffset.z=_height_fusioned-task_startAltitude;
-		//get the initial offset we will update in loop		
-		double x_offset_remaing=x_offset_Desired-localoffset.x;
-		double y_offset_remaing=y_offset_Desired-localoffset.y;
-		double z_offset_remaing=z_offset_Desired-localoffset.z;
-		
-		double yaw_threshold_in_rad	=	DEG2RAD * yaw_threshold_in_deg;
-		double yaw_desired_rad      =   DEG2RAD * yaw_Desired;
-		
-		double yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;
-
 		float x_speed_factor=0;
 		float y_speed_factor=0;
 		float z_speed_factor=0;
-		
-		float distance=sqrtf(powf(x_offset_remaing,2) + powf(y_offset_remaing,2) + powf(z_offset_remaing,2));
-		float v_factor=distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY; 
-		if(distance>0.01){
-			x_speed_factor=v_factor*(x_offset_remaing/distance);
-			y_speed_factor=v_factor*(y_offset_remaing/distance);
-			z_speed_factor=v_factor*(z_offset_remaing/distance);
-		}else{
-			x_speed_factor=0;
-			y_speed_factor=0;
-			z_speed_factor=0;
-		}
-		float xcmd=x_speed_factor;
-		float ycmd=y_speed_factor;
-		float zcmd =_height_fusioned +z_speed_factor;
-		
-		while(!_auto_running_need_break){
-			//send the control cmd to vehicle fc
-			_vehicle->control->positionAndYawCtrl(xcmd,ycmd,zcmd,yaw_Desired);			
-			usleep(20000);  //20ms
-			//get the current offset			
+		double yaw_threshold_in_rad	=	DEG2RAD * yaw_threshold_in_deg;
+		double yaw_desired_rad      =   DEG2RAD * yaw_Desired;
+		do{ 		
 			localOffsetFromGPSOffset(localoffset, static_cast<void*>(&_current_lat_lon), static_cast<void*>(&task_startPoint));
 			localoffset.z=_height_fusioned-task_startAltitude;
-
-			x_offset_remaing=x_offset_Desired-localoffset.x;
-			y_offset_remaing=y_offset_Desired-localoffset.y;
-			z_offset_remaing=z_offset_Desired-localoffset.z;
-			yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;
-			
-			distance=sqrtf( powf(x_offset_remaing,2) + powf(y_offset_remaing,2) + powf(z_offset_remaing,2));
-			v_factor=distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY; 
-			if(distance>0.01){
-				x_speed_factor=v_factor*(x_offset_remaing/distance); //x speed direct
-				y_speed_factor=v_factor*(y_offset_remaing/distance); //y speed direct
+			//get the initial offset we will update in loop		
+			double x_offset_remaing=x_offset_Desired-localoffset.x;
+			double y_offset_remaing=y_offset_Desired-localoffset.y;
+			double z_offset_remaing=z_offset_Desired-localoffset.z;
+			//current the head		
+			double yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;
+			//checke if finished control
+			if(std::fabs(x_offset_remaing)< pos_threshold_in_m &&
+			   std::fabs(y_offset_remaing)< pos_threshold_in_m &&
+			   std::fabs(z_offset_remaing)< 0.5 &&
+			   std::fabs(yaw_in_rad-yaw_desired_rad) < yaw_threshold_in_rad){
+				break;
+			}
+			//check interrupt command
+			if(_auto_running_need_break){
+				_auto_running_need_break=false;
+				FLIGHTLOG("Move X,Y,Z,yaw by offset is breaked.");			
+				return false;	
+			}
+			float distance=sqrtf(powf(x_offset_remaing,2) + powf(y_offset_remaing,2) + powf(z_offset_remaing,2));
+			float v_factor=distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY;
+			if(v_factor < MIN_SPEED_FACTOR){
+				v_factor=MIN_SPEED_FACTOR;
+			}
+			if(distance > 0.01){
+				x_speed_factor=v_factor*(x_offset_remaing/distance);
+				y_speed_factor=v_factor*(y_offset_remaing/distance);
 				z_speed_factor=v_factor*(z_offset_remaing/distance);
 			}else{
 				x_speed_factor=0;
 				y_speed_factor=0;
 				z_speed_factor=0;
 			}
-			xcmd=x_speed_factor;
-			ycmd=y_speed_factor;
-			zcmd =_height_fusioned + z_speed_factor;
-
-			if(std::fabs(x_offset_remaing)< pos_threshold_in_m &&
-			   std::fabs(y_offset_remaing)< pos_threshold_in_m &&
-			   std::fabs(z_offset_remaing)< 1 &&
-			   std::fabs(yaw_in_rad-yaw_desired_rad)< yaw_threshold_in_rad){
-				break;
-			}
-		}
-		if(_auto_running_need_break){
-			_auto_running_need_break=false;
-			FLIGHTLOG("Move X,Y,Z by offset is breaked.");			
-			return false;	
-		}
+			float xcmd=x_speed_factor;
+			float ycmd=y_speed_factor;
+			float zcmd =_height_fusioned +z_speed_factor;
+			
+			//send the control cmd to vehicle fc
+			_vehicle->control->positionAndYawCtrl(xcmd,ycmd,zcmd,yaw_Desired);			
+			usleep(20000);  //20ms
+		}while(!_auto_running_need_break);
 		// do a emergencyBrake 
 		_vehicle->control->emergencyBrake();		
 	}else{

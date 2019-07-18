@@ -10,6 +10,7 @@
 #include "LuaParser.h"
 #include "LuaInterface.h"
 #include "Message.h"
+#include "Debug.h"
 std::thread* LuaParser::_lua_script_run_thread=nullptr;
 lua_State* LuaParser::_lua=nullptr;
 bool 	LuaParser::_lua_script_thread_running=false;
@@ -106,7 +107,8 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool n
 			delete _lua_script_run_thread;
 			_lua_script_run_thread=nullptr;
 		}
-		
+#ifdef OFFLINE_DEBUG
+#else		
 		// clear the while loop break flag in flight core class before run the lua script
 		FlightCore::djiNeedBreakAutoControl(false);
 		// get flight core ctr authority
@@ -114,6 +116,7 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool n
 			DWAR("Lua thread get ctr authority err.");	
 			return false;
 		}
+#endif
 		FLIGHTLOG("Creat a New thread for lua script run...");
 		_lua_script_thread_running=true;
 		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this);
@@ -132,12 +135,17 @@ LuaParser::LuaParserRunThread(){
 	}else{
 		FLIGHTLOG("The lua script run Complete.");
 	}
+	//clear the thread runng flag
 	if(_lua_script_thread_running){
 		_lua_script_thread_running=false;
+#ifdef OFFLINE_DEBUG
+#else
 		if(!FlightCore::djiReleaseControlAuthority()){
 			DWAR("Lua thread release ctr authority err.");
 		}
+#endif
 	}
+
 }
 
 void 

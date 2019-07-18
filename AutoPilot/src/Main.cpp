@@ -31,7 +31,6 @@ int main(int argc, char** argv){
 			usleep(100000);//100ms
 			continue;
 		}
-		
 		//split cmd and param
 		if(!Commander::splitCMDAndParam(input)){
 			std::cout<<"Input command format err."<<std::endl;	
