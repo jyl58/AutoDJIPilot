@@ -9,6 +9,7 @@
 #include <sstream>
 #include <dlfcn.h>
 #include "Commander.h"
+#include "Debug.h"
 
 ConsoleServer* Commander::_console_server=nullptr;	
 LinuxSetup* Commander::_linux_setup=nullptr;
@@ -63,7 +64,13 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	_linux_setup	=new LinuxSetup(_lua_parser,config_file_path);
 	if(_linux_setup == nullptr)
 		exit(1);
-
+#ifdef OFFLINE_DEBUG
+#else		
+	if(!_linux_setup->initVehicle()){
+		DERR("Init vehicle err!");
+		exit(1);
+	}
+	
 	_flight_core	=new FlightCore();
 	if(_flight_core == nullptr ){
 		DERR("Creat flight core err!");
@@ -79,6 +86,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	/*if (!MavlinkRouter::MavlinkRouterInit(_linux_setup->getMAVlinkDevPort()->c_str())){
 		exit(1);	
 	}*/
+#endif
 	//creat a consoler server for remote cmd 
 	_console_server=new ConsoleServer();
 	if(_console_server == nullptr){
@@ -118,25 +126,23 @@ Commander::AutopilotSystemExit(){
 */
 bool
 Commander::splitCMDAndParam(const std::string& input_stream){
-		
 	//clear cmd and param vector
-	_cmd_and_param.clear();
+	_cmd_and_param.erase(_cmd_and_param.begin(),_cmd_and_param.end());
 	std::string::size_type pos1,pos2;
 	// find the first not space position ,from 0 pos
 	pos1=input_stream.find_first_not_of(" ",0);
 	// Do not find a no space character return	
 	if(pos1==std::string::npos)
 		return false;
-	// find the space from pos1 position
-	pos2=input_stream.find(" ",pos1); 
 	while(pos1 != std::string::npos){
-		_cmd_and_param.push_back(input_stream.substr(pos1,pos2-pos1));
-		// find the next  not space pos ,from pos2
-		pos1=input_stream.find_first_not_of(" ",pos2); 
-		pos2=input_stream.find(" ",pos1);
+		// find the space from pos1 position
+		pos2=input_stream.find(" ",pos1); 
 		if(pos2 == std::string::npos){
 			pos2=input_stream.size(); // last pos
 		}
+		_cmd_and_param.push_back(input_stream.substr(pos1,pos2-pos1));
+		// find the next  not space pos ,from pos2
+		pos1=input_stream.find_first_not_of(" ",pos2);
 	}
 	return true;
 }
@@ -216,31 +222,31 @@ Commander::ZoomCamera(std::ostringstream& outMsg){
 		outMsg<<"Flight Core is't run!"<<std::endl;
 		return;
 	}
-	if(_cmd_and_param[1].empty()){
+	if(_cmd_and_param.at(1).empty()){
 		outMsg<<"Zoom CMD need a subcmd as argument."<<std::endl;
 		return;
 	}
-	if(_cmd_and_param[1].compare("pos")){
-		if(_cmd_and_param[2].empty()){
+	if(_cmd_and_param.at(1).compare("pos")){
+		if(_cmd_and_param.at(2).empty()){
 			outMsg<<"Zoom pos need a value as argument.(e.g. zoom pos 500)"<<std::endl;
 			return;
 		}
-		_flight_core->djiCameraZoomByPos((uint16_t)std::stoi(_cmd_and_param[2]));
-	}else if(_cmd_and_param[1].compare("speed")){
-		if(_cmd_and_param[2].empty()){
+		_flight_core->djiCameraZoomByPos((uint16_t)std::stoi(_cmd_and_param.at(2)));
+	}else if(_cmd_and_param.at(1).compare("speed")){
+		if(_cmd_and_param.at(2).empty()){
 			outMsg<<"Zoom speed need a value as argument.(e.g. zoom speed 50)"<<std::endl;
 			return;
 		}
-		_flight_core->djiCameraZoomBySpeed((int16_t)std::stoi(_cmd_and_param[2]));
-	}else if (_cmd_and_param[1].compare("step")){
-		_flight_core->djiCameraZoomBystep((int16_t)std::stoi(_cmd_and_param[2]));
+		_flight_core->djiCameraZoomBySpeed((int16_t)std::stoi(_cmd_and_param.at(2)));
+	}else if (_cmd_and_param.at(1).compare("step")){
+		_flight_core->djiCameraZoomBystep((int16_t)std::stoi(_cmd_and_param.at(2)));
 	}else{
 		outMsg<<"Don't support zoom's subcmd: "<<_cmd_and_param[1]<<std::endl;
 	}
 }
 void 
 Commander::LoadPayloadPlugin(std::ostringstream& outMsg){
-	if(_cmd_and_param[1].empty()){
+	if(_cmd_and_param.at(1).empty()){
 		DWAR("Load CMD need a param for dynamic lib path.");
 		return;
 	}
@@ -249,9 +255,9 @@ Commander::LoadPayloadPlugin(std::ostringstream& outMsg){
 		dlclose(dynamic_lib_handler);
 
 	// open the user payload control plugin .so  
-	dynamic_lib_handler=dlopen(_cmd_and_param[1].c_str(),RTLD_NOW);
+	dynamic_lib_handler=dlopen(_cmd_and_param.at(1).c_str(),RTLD_NOW);
 	if(!dynamic_lib_handler){
-		DWAR("Load "+_cmd_and_param[1]+" dynamic lib err!");
+		DWAR("Load "+_cmd_and_param.at(1)+" dynamic lib err!");
 	}
 	// function handler
 	typedef PayloadBase* (*payload_creat)(void);
@@ -268,11 +274,11 @@ Commander::LoadPayloadPlugin(std::ostringstream& outMsg){
 }
 void 
 Commander::RunLuaScript(std::ostringstream& outMsg){
-	if(_cmd_and_param[1].empty()){
+	if(_cmd_and_param.size()<2){
 		outMsg<<"Run CMD need a param for lua script file path"<<std::endl;
 		return;
 	}
-	std::ifstream lua_file_handle(_cmd_and_param[1]);
+	std::ifstream lua_file_handle(_cmd_and_param.at(1));
 	if (!lua_file_handle.is_open()){
 		outMsg<<"Lua script file open err."<<std::endl;
 		return;
@@ -288,7 +294,7 @@ Commander::RunLuaScript(std::ostringstream& outMsg){
 		return;
 	}
 	// creat a new thread for run user's lua script 
-	_lua_parser->LuaScriptOpenAndRun(_cmd_and_param[1],true);
+	_lua_parser->LuaScriptOpenAndRun(_cmd_and_param.at(1),true);
 }
 void 
 Commander::BreakRunLuaScript(std::ostringstream& outMsg){
@@ -312,20 +318,20 @@ Commander::SetGimbal(std::ostringstream& outMsg){
 		outMsg<<"Gimbal is not mount!"<<std::endl;
 		return;
 	}
-	if(_cmd_and_param[1].empty()){
+	if(_cmd_and_param.size()<2){
 		outMsg<<"gimbal CMD need a argument (angle|speed)"<<std::endl;
 		return;
 	}
 
-	if(_cmd_and_param[1].compare("angle") == 0){
-		float roll_deg=_cmd_and_param[2].empty()?  0 : std::stof(_cmd_and_param[2]);
-		float pitch_deg=_cmd_and_param[3].empty()? 0 : std::stof(_cmd_and_param[3]);
-		float yaw_deg=_cmd_and_param[4].empty()?   0 : std::stof(_cmd_and_param[4]);
+	if(_cmd_and_param.at(1).compare("angle") == 0){
+		float roll_deg=_cmd_and_param.size()<3?  0 : std::stof(_cmd_and_param.at(2));
+		float pitch_deg=_cmd_and_param.size()<4? 0 : std::stof(_cmd_and_param.at(3));
+		float yaw_deg=_cmd_and_param.size()<5?   0 : std::stof(_cmd_and_param.at(4));
 		_flight_core->djiSetGimbalAngle(roll_deg,pitch_deg,yaw_deg);
-	}else if(_cmd_and_param[1].compare("speed") == 0){
+	}else if(_cmd_and_param.at(1).compare("speed") == 0){
 		//TODO: add speed 	
 	}else{
-		outMsg<<"Don't support gimbal's subcmd: "<<_cmd_and_param[1]<<std::endl;
+		outMsg<<"Don't support gimbal's subcmd: "<<_cmd_and_param.at(1)<<std::endl;
 	}
 }
 void 
@@ -334,14 +340,14 @@ Commander::RunVideo(std::ostringstream& outMsg){
 		outMsg<<"Flight Core is't run!"<<std::endl;
 		return;
 	}
-	if(_cmd_and_param[1].empty()){
+	if(_cmd_and_param.size()<2){
 		outMsg<<"video CMD need a argument (start|stop)"<<std::endl;
 		return;
 	}
-	if(_cmd_and_param[1].compare("start")==0){
+	if(_cmd_and_param.at(1).compare("start")==0){
 		_flight_core->djiVideoStart();
 		outMsg<<"video start..."<<std::endl;
-	}else if (_cmd_and_param[1].compare("stop")==0){
+	}else if (_cmd_and_param.at(1).compare("stop")==0){
 		_flight_core->djiVideoStop();
 		outMsg<<"video stop"<<std::endl;
 	}else{
@@ -360,13 +366,13 @@ void
 Commander::RunCommand(std::ostringstream& outMsg){
 	int cmd_index=0;
 	for(cmd_index=0; cmd_index<(sizeof(cmd_table)/sizeof(cmd_table[0]));  cmd_index++){
-		if(_cmd_and_param[0].compare(cmd_table[cmd_index].cmd_name) == 0){
+		if(_cmd_and_param.front().compare(cmd_table[cmd_index].cmd_name) == 0){
 			//call the cmd function
 			cmd_table[cmd_index].cmd_function(outMsg);
 			break;
 		}
 	}
 	if(cmd_index == (sizeof(cmd_table)/sizeof(cmd_table[0]))){
-		outMsg<<"Input CMD: "<<_cmd_and_param[0]<<" is't support yet."<<std::endl;
+		outMsg<<"Input CMD: "<<_cmd_and_param.front()<<" is't support yet."<<std::endl;
 	}
 }
