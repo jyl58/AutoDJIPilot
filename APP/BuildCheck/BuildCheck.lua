@@ -1,3 +1,5 @@
+home_path=os.getenv("HOME");
+package.path=home_path.."/AutoDJIPilot/APP/common/tools.lua;"
 require(tools.lua)
 require(geo.lua)
 
@@ -5,17 +7,18 @@ CHECK_FLY_MAX_SPEED=2.0
 CHECK_FLY_MIN_SPEED=0.3
 CHECK_BREAK_BOUNDARY=2.0
 
-PCODE_FILE_PATH="/home/"
+PCODE_FILE_PATH=home_path.."/AutoDJIPilot/APP/BuildCheck/Path.pcode
 
 --open the pcode file
 local pcode_handler=io.open(PCODE_FILE_PATH,"r")
 if pcode_handler == nil then
-	
+	print("open the pcode file"..PCODE_FILE_PATH.." err")
+	return;
 end
 
 --read the origin point lat lon and alt
 local origin_lat,origin_lon,origin_alt;
-for line in pcode_handler:read() do
+for line in pcode_handler:lines() do
 	-- split with space
 	line_tab=stringSplit(line," ");
 	if line_tab[1] == "O:" then 
@@ -38,9 +41,9 @@ LuaSetGimbalAngle(-90);
 -- start video record
 LuaVideoStart();
 
--- read thd path point 
+-- read the path point 
 local target_x,target_y,target_z;
-for path in pcode_hanlder:read() do
+for path in pcode_hanlder:lines() do
 	path_tab=stringSplit(path," ");
 	if path_tab[1] == "P1" then
 		target_x=tonumber(string.sub(path_tab[2],2,-1));
@@ -51,17 +54,17 @@ for path in pcode_hanlder:read() do
 		<--TODO: add fly commd function-->
 		flyToTargetPoint(target_x,target_y,target_z);
 	end
-	
 	<--TODO: add gimbal commd function-->
 end
-
+--close the pcode
+pcode_handler:close()
 --stop video record
 LuaVideoStop();
 
 -- go home
 LuaGoHome();
 
---flight done
+<--flight done-->
 
 ---function 
 function turnVehicleHead(target_x,target_y)

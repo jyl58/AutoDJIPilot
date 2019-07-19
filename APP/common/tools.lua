@@ -1,4 +1,3 @@
-
 --split the str use split char 
 function stringSplit(str,split_char)
 	local sub_table={};
