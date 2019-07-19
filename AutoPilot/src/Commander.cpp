@@ -9,7 +9,6 @@
 #include <sstream>
 #include <dlfcn.h>
 #include "Commander.h"
-#include "Debug.h"
 
 ConsoleServer* Commander::_console_server=nullptr;	
 LinuxSetup* Commander::_linux_setup=nullptr;

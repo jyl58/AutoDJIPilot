@@ -7,7 +7,7 @@ CHECK_FLY_MAX_SPEED=2.0
 CHECK_FLY_MIN_SPEED=0.3
 CHECK_BREAK_BOUNDARY=2.0
 
-PCODE_FILE_PATH=home_path.."/AutoDJIPilot/APP/BuildCheck/Path.pcode
+PCODE_FILE_PATH=home_path.."/AutoDJIPilot/APP/BuildCheck/PathCode/Path.pcode
 
 --open the pcode file
 local pcode_handler=io.open(PCODE_FILE_PATH,"r")

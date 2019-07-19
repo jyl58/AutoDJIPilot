@@ -10,7 +10,7 @@
 #include "LuaParser.h"
 #include "LuaInterface.h"
 #include "Message.h"
-#include "Debug.h"
+
 std::thread* LuaParser::_lua_script_run_thread=nullptr;
 lua_State* LuaParser::_lua=nullptr;
 bool 	LuaParser::_lua_script_thread_running=false;

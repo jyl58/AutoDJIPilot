@@ -12,6 +12,13 @@ if (ADVANCED_SENSING)
 	find_package(LibUSB REQUIRED)
 	include_directories(${LIBUSB_1_INCLUDE_DIRS})
 endif()
+OPTION(DEBUG "Debug without link dji vehicle" OFF)
+
+if (DEBUG)
+	add_definitions(-DOFFLINE_DEBUG)
+	message("make for offline debug mode.")
+endif()
+
 add_subdirectory(lib/Onboard-SDK/)
 add_subdirectory(lib/lua-5.3.5/)
 add_subdirectory(AutoPilot/)
