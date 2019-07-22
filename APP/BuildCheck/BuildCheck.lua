@@ -7,7 +7,7 @@ CHECK_FLY_MAX_SPEED=2.0;
 CHECK_FLY_MIN_SPEED=0.3;
 CHECK_BREAK_BOUNDARY=2.0;
 
-PCODE_FILE_PATH="/mnt/dietpi_userdata/Path.pcode";--home_path.."/AutoDJIPilot/APP/BuildCheck/PathCode/Path.pcode
+PCODE_FILE_PATH="/mnt/dietpi_userdata/Path.pcode";
 
 --open the pcode file
 local pcode_handler=io.open(PCODE_FILE_PATH,"r")
@@ -49,12 +49,12 @@ for path in pcode_hanlder:lines() do
 		target_x=tonumber(string.sub(path_tab[2],2,-1));
 		target_y=tonumber(string.sub(path_tab[3],2,-1));
 		target_z=tonumber(string.sub(path_tab[4],2,-1));
-		<--turn the head to next point-->
+		--[[turn the head to next point--]]
 		turnVehicleHead(target_x,target_y);
-		<--TODO: add fly commd function-->
+		--[[TODO: add fly commd function--]]
 		flyToTargetPoint(target_x,target_y,target_z);
 	end
-	<--TODO: add gimbal commd function-->
+	--[[TODO: add gimbal commd function--]]
 end
 --close the pcode
 pcode_handler:close()
@@ -64,7 +64,7 @@ LuaVideoStop();
 -- go home
 LuaGoHome();
 
-<--flight done-->
+--[[flight done--]]
 
 ---function 
 function turnVehicleHead(target_x,target_y)
