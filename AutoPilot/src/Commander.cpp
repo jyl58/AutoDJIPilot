@@ -44,10 +44,10 @@ const char* Commander::cmd_description[]={
 	"\t\tGoOn run the lua script.",
 	"\t\tInterrupt run the lua script.",
 	"\t\tLoad the user's Payload control plugin,need a *.so file path as a argument.",
-	"\t\tTake a photo use dji camera",
-	"\t\tControl dji video start or stop record,need (start|stop)as a argument",
-	"\t\tSet gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0)",
-	"\t\tZoom camera,just support z30 ,need(pos|speed|step)as a subcmd.(pos [100,3000] | speed [-100,100] |step []",
+	"\t\tTake a photo use dji camera.",
+	"\t\tControl dji video start or stop record,need (start|stop)as a argument.",
+	"\t\tSet gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0).",
+	"\t\tZoom camera,just support z30 ,need(pos|speed|step)as a subcmd.(pos [100,3000] | speed [-100,100] |step [].",
 	"\t\tPrint this help message.",
 	"\t\tExit the application."
 };
