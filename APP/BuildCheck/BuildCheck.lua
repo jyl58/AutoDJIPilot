@@ -1,13 +1,13 @@
 home_path=os.getenv("HOME");
-package.path=home_path.."/AutoDJIPilot/APP/common/tools.lua;"
+package.path=home_path.."/AutoDJIPilot/APP/common/tools.lua";
 require(tools.lua)
 require(geo.lua)
 
-CHECK_FLY_MAX_SPEED=2.0
-CHECK_FLY_MIN_SPEED=0.3
-CHECK_BREAK_BOUNDARY=2.0
+CHECK_FLY_MAX_SPEED=2.0;
+CHECK_FLY_MIN_SPEED=0.3;
+CHECK_BREAK_BOUNDARY=2.0;
 
-PCODE_FILE_PATH=home_path.."/AutoDJIPilot/APP/BuildCheck/PathCode/Path.pcode
+PCODE_FILE_PATH="/mnt/dietpi_userdata/Path.pcode";--home_path.."/AutoDJIPilot/APP/BuildCheck/PathCode/Path.pcode
 
 --open the pcode file
 local pcode_handler=io.open(PCODE_FILE_PATH,"r")
