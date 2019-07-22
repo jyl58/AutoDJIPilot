@@ -7,16 +7,16 @@
 ##################################
 cmake_minimum_required(VERSION 3.0)
 
+OPTION(DEBUG "Debug without link dji vehicle" OFF)
+if (DEBUG)
+	add_definitions(-DOFFLINE_DEBUG)
+	message("make for offline debug mode.")
+endif()
+
 SET(ADVANCED_SENSING 0)
 if (ADVANCED_SENSING)
 	find_package(LibUSB REQUIRED)
 	include_directories(${LIBUSB_1_INCLUDE_DIRS})
-endif()
-OPTION(DEBUG "Debug without link dji vehicle" OFF)
-
-if (DEBUG)
-	add_definitions(-DOFFLINE_DEBUG)
-	message("make for offline debug mode.")
 endif()
 
 add_subdirectory(lib/Onboard-SDK/)
