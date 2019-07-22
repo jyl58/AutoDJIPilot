@@ -50,6 +50,8 @@ private:
 	static void ZoomCamera(std::ostringstream& outMsg);
 	static void	LoadPayloadPlugin(std::ostringstream& outMsg);
 	static void RunLuaScript(std::ostringstream& outMsg);
+	static void PauseRunLuaScript(std::ostringstream& outMsg);
+	static void GoOnRunLuaScript(std::ostringstream& outMsg);
 	static void BreakRunLuaScript(std::ostringstream& outMsg);
 	static void SetGimbal(std::ostringstream& outMsg);
 	static void RunVideo(std::ostringstream& outMsg);

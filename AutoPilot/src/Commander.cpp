@@ -24,6 +24,8 @@ const command_function_t Commander::cmd_table[]={
 	{"state",Commander::PrintFlightStatusCMD},
 	{"config",Commander::PrintConfigMsgCMD},
 	{"run",Commander::RunLuaScript},
+	{"pause",Commander::PauseRunLuaScript},
+	{"continue",Commander::GoOnRunLuaScript},
 	{"break",Commander::BreakRunLuaScript},
 	{"load",Commander::LoadPayloadPlugin},
 	{"photo",Commander::ShootPhoto},
@@ -38,7 +40,9 @@ const char* Commander::cmd_description[]={
 	"\t\tPrint the Vehicle and gimbal status.",
 	"\t\tPrint the input config message in config.lua file.",
 	"\t\tRun the external lua script file ,need a *.lua file path as a argument.",
-	"\t\tInterrupt run the lua script ",
+	"\t\tPause the Runing lua script.",
+	"\t\tGoOn run the lua script.",
+	"\t\tInterrupt run the lua script.",
 	"\t\tLoad the user's Payload control plugin,need a *.so file path as a argument.",
 	"\t\tTake a photo use dji camera",
 	"\t\tControl dji video start or stop record,need (start|stop)as a argument",
@@ -294,6 +298,14 @@ Commander::RunLuaScript(std::ostringstream& outMsg){
 	}
 	// creat a new thread for run user's lua script 
 	_lua_parser->LuaScriptOpenAndRun(_cmd_and_param.at(1),true);
+}
+void 
+Commander::PauseRunLuaScript(std::ostringstream& outMsg){
+	LuaParser::LuaRunPause("console pause cmd");
+}
+void 
+Commander::GoOnRunLuaScript(std::ostringstream& outMsg){
+	LuaParser::LuaRunGoOn("console continue cmd");
 }
 void 
 Commander::BreakRunLuaScript(std::ostringstream& outMsg){

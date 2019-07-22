@@ -26,7 +26,13 @@ public:
 		
 	////////////SYS CONTROL////////////
 	static void LuaStop(lua_State* lua,lua_Debug* ar);
-
+	
+	/**********************************
+	* pause the lua script run into a while loop untill exit by command
+	************************************/
+	static void LuaPause(lua_State* lua, lua_Debug* ar);
+	
+	
 	////////////flight control ////////
 	/********************************
 	* takeoff function for lua script
@@ -164,5 +170,6 @@ public:
 	* flight core
 	*******************************/	
 	static FlightCore * _flight_core;
-
+	
+	static bool _need_go_on_run;
 };

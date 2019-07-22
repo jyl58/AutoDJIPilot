@@ -53,6 +53,7 @@ public:
 		bool 	djiMoveZByOffset(float target_alt_m,float vertical_threshold_in_m=0.5);
 		bool 	djiMoveZToTarget(float target_alt_m);
 		bool 	djiMoveByVelocity(float vx,float vy,float vz);
+		bool 	djiHover();
 		bool 	djiTurnHead(float target_head_deg,float yaw_threshold_in_deg=1.0);
 		bool 	djiLanding();
 		bool 	djiGoHome();

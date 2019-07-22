@@ -742,7 +742,18 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 	}
 	return true;
 }
-
+/*
+* hover the dji vehicle to current pos
+*/
+bool
+FlightCore::djiHover(){
+	if(_flightStatus == VehicleStatus::FlightStatus::IN_AIR){
+		//vehicle in air set pos offset 0,0,0 and velocity 0,0,0
+		djiMoveByPosOffset(0,0,0,0);
+		djiMoveByVelocity(0,0,0);
+	}
+	return true;
+}
 bool FlightCore::djiArmMotor(){
 	char func[50];
 	ACK::ErrorCode cmd_status = _vehicle->control->armMotors(1);

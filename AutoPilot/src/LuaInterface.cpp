@@ -17,6 +17,7 @@ using namespace DJI::OSDK;
 using namespace DJI::OSDK::Telemetry;
 
 FlightCore* LuaInterface::_flight_core=nullptr;
+bool LuaInterface::_need_go_on_run=false;
 
 LuaInterface::LuaInterface()
 {
@@ -27,10 +28,19 @@ LuaInterface::~LuaInterface(){
 
 void LuaInterface::LuaStop(lua_State* lua, lua_Debug* ar){
 	lua_sethook(lua,NULL,0,0);
-	FLIGHTLOG("Lua script running Interrupt");
+	FLIGHTLOG("Lua script running Interrupt.");
 	luaL_error(lua,"Run Interrupt...");
 }
-
+void LuaInterface::LuaPause(lua_State* lua, lua_Debug* ar){
+	lua_sethook(lua,NULL,0,0);
+	while(!_need_go_on_run){
+		if(_flight_core != nullptr){
+			_flight_core->djiHover();
+		}
+		//sleep 300ms
+		usleep(300000);
+	}
+}
 int LuaInterface::LuaTakeoff(lua_State* lua){
 	// write message to log buff
 	FLIGHTLOG("Run takeoff by lua script.");
