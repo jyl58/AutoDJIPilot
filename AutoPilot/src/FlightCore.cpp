@@ -48,10 +48,19 @@ FlightCore::djiGetControlAuthority(){
 		DWAR("Vehicle pointer is nullptr.");	
 		return false;
 	}
-	//get control authority
-	ACK::ErrorCode Status=_vehicle->obtainCtrlAuthority(functionTimeout);
-	if (ACK::getError(Status) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(Status,func);
+	//get control authority //try 3 times for roubust
+	int try_times=0;
+	for(try_times=0;try_times<3;try_times++){
+		ACK::ErrorCode Status=_vehicle->obtainCtrlAuthority(functionTimeout);
+		if (ACK::getError(Status) == ACK::SUCCESS){
+			break;
+		}else{
+			//sleep 1s and try again
+			ACK::getErrorCodeMessage(Status,func);
+			sleep(1);
+		}
+	}
+	if(try_times>=3){
 		std::string errmsg(func);
 		DWAR("Get control authority err: "+errmsg);	
 		return false;
@@ -66,10 +75,19 @@ FlightCore::djiReleaseControlAuthority(){
 		DWAR("Vehicle pointer is nullptr.");	
 		return false;
 	}
-	//Release control authority
-	ACK::ErrorCode Status=_vehicle->releaseCtrlAuthority(functionTimeout);
-	if (ACK::getError(Status) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(Status,func);
+	//Release control authority//try 3 times for roubust
+	int try_times=0;
+	for(try_times=0; try_times<3; try_times++){
+		ACK::ErrorCode Status=_vehicle->releaseCtrlAuthority(functionTimeout);
+		if (ACK::getError(Status) == ACK::SUCCESS){
+			break;
+		}else{
+			//sleep 1s and try again
+			ACK::getErrorCodeMessage(Status,func);
+			sleep(1);
+		}
+	}
+	if(try_times>=3){
 		std::string errmsg(func);
 		DWAR("Release control authority err: "+errmsg);	
 		return false;
@@ -356,9 +374,9 @@ FlightCore::djiTakeoff(){
 		int cmdstart=0;	
 		while(_flightStatus != VehicleStatus::FlightStatus::ON_GROUND && 
 			  _display_mode != VehicleStatus::DisplayMode::MODE_ENGINE_START&& 
-			  cmdstart<20){		
+			  cmdstart<30){		
 			cmdstart++;
-			usleep(100000); //waiting 20*100ms=2s
+			usleep(100000); //waiting 30*100ms=3s
 		}
 		if(cmdstart == 20){
 			DWAR("Takeoff filed, Motors are not spining");		
