@@ -108,33 +108,31 @@ LuaVideoStart();
 print("video started")
 -- read the path point 
 local target_x,target_y,target_z;
-for path in pcode_hanlder:lines() do
+for line in pcode_hanlder:lines() do
 	-- split with space
-	path_tab=stringSplit(path," ");
-	if path_tab[1] == "P1" then
-		target_x=tonumber(string.sub(path_tab[2],2,-1));
-		target_y=tonumber(string.sub(path_tab[3],2,-1));
-		target_z=tonumber(string.sub(path_tab[4],2,-1));
+	line_tab=stringSplit(line," ");
+	if line_tab[1] == "P1" then
+		target_x=tonumber(string.sub(line_tab[2],2,-1));
+		target_y=tonumber(string.sub(line_tab[3],2,-1));
+		target_z=tonumber(string.sub(line_tab[4],2,-1));
 		--[[turn the head to next point--]]
 		turnVehicleHead(target_x,target_y);
 		--[[TODO: add fly commd function--]]
 		flyToTargetPoint(target_x,target_y,target_z);
 	end
-	if path_tab[1]=="#Layer" then
-		print("Fly at "..path_tab[2].."layer")
+	if line_tab[1]=="#Layer" then
+		print("Fly at "..line_tab[2].."layer")
 	end
 	--[[TODO: add gimbal commd function--]]
 end
 --close the pcode
 pcode_handler:close()
 --stop video record
-LuaVideoStop();
 
+LuaVideoStop();
+print("Done path fly,now go home")
 -- go home
 LuaGoHome();
 
 --[[flight done--]]
-
-
-
 
