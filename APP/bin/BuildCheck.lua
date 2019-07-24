@@ -80,16 +80,15 @@ if pcode_handler == nil then
 end
 
 --read the origin point lat lon and alt
-origin_lat=0;
-origin_lon=0;
-origin_alt=0;
+PathFly={}
+
 for line in pcode_handler:lines() do
 	-- split with space
 	line_tab=stringSplit(line," ");
 	if line_tab[1] == "O:" then 
-		origin_lat=tonumber(line_tab[2]);
-		origin_lon=tonumber(line_tab[3]);
-		origin_alt=tonumber(line_tab[4]);
+		PathFly.origin_lat=tonumber(line_tab[2]);
+		PathFly.origin_lon=tonumber(line_tab[3]);
+		PathFly.origin_alt=tonumber(line_tab[4]);
 		break;
 	end
 end
@@ -98,7 +97,7 @@ end
 LuaTakeoff();
 print("takeoff done")
 --fly to origin 
-LuaFlyByGPS(origin_lat,origin_lon);
+LuaFlyByGPS(PathFly.origin_lat,PathFly.origin_lon);
 print("arrive start point")
 --set the gimbal angle. reletive vehicle head  
 LuaSetGimbalAngle(0,0,-90);
@@ -107,18 +106,17 @@ print("gimbal set done")
 LuaVideoStart();
 print("video started")
 -- read the path point 
-local target_x,target_y,target_z;
 for line in pcode_hanlder:lines() do
 	-- split with space
 	line_tab=stringSplit(line," ");
 	if line_tab[1] == "P1" then
-		target_x=tonumber(string.sub(line_tab[2],2,-1));
-		target_y=tonumber(string.sub(line_tab[3],2,-1));
-		target_z=tonumber(string.sub(line_tab[4],2,-1));
+		PathFly.target_x=tonumber(string.sub(line_tab[2],2,-1));
+		PathFly.target_y=tonumber(string.sub(line_tab[3],2,-1));
+		PathFly.target_z=tonumber(string.sub(line_tab[4],2,-1));
 		--[[turn the head to next point--]]
-		turnVehicleHead(target_x,target_y);
+		turnVehicleHead(PathFly.target_x,PathFly.target_y);
 		--[[TODO: add fly commd function--]]
-		flyToTargetPoint(target_x,target_y,target_z);
+		flyToTargetPoint(PathFly.target_x,PathFly.target_y,PathFly.target_z);
 	end
 	if line_tab[1]=="#Layer" then
 		print("Fly at "..line_tab[2].."layer")
