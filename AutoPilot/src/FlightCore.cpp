@@ -672,13 +672,14 @@ bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 			usleep(20000);  //20ms
 			float current_yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;	
 			//check if finished turn head
-			if(std::fabs(current_yaw_in_rad*RAD2DEG-target_head_deg) < yaw_threshold_in_deg)
+			if(std::fabs(current_yaw_in_rad*RAD2DEG-target_head_deg) < yaw_threshold_in_deg){
 				break;	
-		}
-		if(_auto_running_need_break){
-			_auto_running_need_break=false;
-			FLIGHTLOG("Trun head is breaked.");			
-			return false;	
+			}
+			if(_auto_running_need_break){
+				_auto_running_need_break=false;
+				FLIGHTLOG("Trun head is breaked.");			
+				return false;	
+			}
 		}
 	}else{
 		//TODO: add m100 and m600
