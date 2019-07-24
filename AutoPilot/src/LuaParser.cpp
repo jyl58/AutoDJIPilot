@@ -164,7 +164,7 @@ LuaParser::LuaRunPause(const std::string& reason){
 	if(_lua_script_thread_running){
 		//first: set the exit flag to false
 		LuaInterface::_need_go_on_run=false;
-		FLIGHTLOG("Lua script running pause by"+reason);
+		FLIGHTLOG("Lua script running pause by "+reason);
 		//second: set lua debug hook for into a while loop
 		lua_sethook(_lua,&LuaInterface::LuaPause,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
 	}
@@ -173,7 +173,7 @@ void
 LuaParser::LuaRunGoOn(const std::string& reason){
 	if(_lua_script_thread_running){
 		//set pause exit flag to true 
-		FLIGHTLOG("Lua script running Go On by"+reason);
+		FLIGHTLOG("Lua script running Go On by "+reason);
 		LuaInterface::_need_go_on_run=true;
 	}
 }

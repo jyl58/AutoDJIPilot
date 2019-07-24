@@ -182,9 +182,9 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	}
 	_vehicle->subscribe->registerUserPackageUnpackCallback(2,RCCallback);
 
-	//package 3: Quaternion  at 200 hz
+	//package 3: Quaternion  at 100 hz
 	pkgIndex					=3;
-	freq 						=200;
+	freq 						=100;
 	TopicName topicList200Hz[]	={ TOPIC_QUATERNION };
 	numTopic					=sizeof(topicList200Hz)/sizeof(topicList200Hz[0]);
 	enableTimestamp				=false;

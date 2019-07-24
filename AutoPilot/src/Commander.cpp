@@ -42,7 +42,7 @@ const char* Commander::cmd_description[]={
 	"\t\tPrint the input config message in config.lua file.",
 	"\t\tRun the external lua script file ,need a *.lua file path as a argument.",
 	"\t\tPause the Runing lua script.",
-	"\t\tGoOn run the lua script.",
+	"\t\tcontinue run the lua script.",
 	"\t\tInterrupt run the lua script.",
 	"\t\tLoad the user's Payload control plugin,need a *.so file path as a argument.",
 	"\t\tTake a photo use dji camera.",
