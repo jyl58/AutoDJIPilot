@@ -5,7 +5,7 @@ function turnVehicleHead(target_x,target_y)
 	local remaing_x,remaing_y,remaing_z;
 	-- get current pos. unit:deg,deg,m
 	current_lat,current_lon,current_alt=LuaGetLocationGPS();
-	current_x_reletive_origin,current_y_reletive_origin=GEO.get_vector_to_next_waypoint(origin_lat,origin_lon,current_lat,current_lon);
+	current_x_reletive_origin,current_y_reletive_origin=GEO.get_vector_to_next_waypoint(PathFly.origin_lat,PathFly.origin_lon,current_lat,current_lon);
 		
 	remaing_x=target_x-current_x_reletive_origin;
 	remaing_y=target_y-current_y_reletive_origin;
@@ -27,8 +27,8 @@ function flyToTargetPoint(target_x,target_y,target_z)
 	while(true) do
 		-- get current pos. unit:deg,deg,m
 		current_lat,current_lon,current_alt=LuaGetLocationGPS();
-		current_x_reletive_origin,current_y_reletive_origin=GEO.get_vector_to_next_waypoint(origin_lat,origin_lon,current_lat,current_lon);
-		current_z_reletive_origin=current_alt-origin_alt;
+		current_x_reletive_origin,current_y_reletive_origin=GEO.get_vector_to_next_waypoint(PathFly.origin_lat,PathFly.origin_lon,current_lat,current_lon);
+		current_z_reletive_origin=current_alt-PathFly.origin_alt;
 		
 		remaing_x=target_x-current_x_reletive_origin;
 		remaing_y=target_y-current_y_reletive_origin;
@@ -106,20 +106,20 @@ print("gimbal set done")
 LuaVideoStart();
 print("video started")
 -- read the path point 
-for line in pcode_hanlder:lines() do
+for line in pcode_handler:lines() do
 	-- split with space
 	line_tab=stringSplit(line," ");
 	if line_tab[1] == "P1" then
-		PathFly.target_x=tonumber(string.sub(line_tab[2],2,-1));
-		PathFly.target_y=tonumber(string.sub(line_tab[3],2,-1));
-		PathFly.target_z=tonumber(string.sub(line_tab[4],2,-1));
+		PathFly.target_x = tonumber(string.sub(line_tab[2],2,-1));
+		PathFly.target_y = tonumber(string.sub(line_tab[3],2,-1));
+		PathFly.target_z = tonumber(string.sub(line_tab[4],2,-1));
 		--[[turn the head to next point--]]
 		turnVehicleHead(PathFly.target_x,PathFly.target_y);
 		--[[TODO: add fly commd function--]]
 		flyToTargetPoint(PathFly.target_x,PathFly.target_y,PathFly.target_z);
 	end
 	if line_tab[1]=="#Layer" then
-		print("Fly at "..line_tab[2].."layer")
+		print("Fly at "..line_tab[2].." layer")
 	end
 	--[[TODO: add gimbal commd function--]]
 end
