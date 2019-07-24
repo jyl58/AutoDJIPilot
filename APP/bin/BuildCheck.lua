@@ -1,71 +1,3 @@
-home_path=os.getenv("HOME");
-package.path=home_path.."/AutoDJIPilot/APP/common/tools.lua";
-require(tools.lua)
-require(geo.lua)
-
-CHECK_FLY_MAX_SPEED=2.0;
-CHECK_FLY_MIN_SPEED=0.3;
-CHECK_BREAK_BOUNDARY=2.0;
-
-PCODE_FILE_PATH="/mnt/dietpi_userdata/Path.pcode";
-
---open the pcode file
-local pcode_handler=io.open(PCODE_FILE_PATH,"r")
-if pcode_handler == nil then
-	print("open the pcode file"..PCODE_FILE_PATH.." err")
-	return;
-end
-
---read the origin point lat lon and alt
-local origin_lat,origin_lon,origin_alt;
-for line in pcode_handler:lines() do
-	-- split with space
-	line_tab=stringSplit(line," ");
-	if line_tab[1] == "O:" then 
-		origin_lat=tonumber(line_tab[2]);
-		origin_lon=tonumber(line_tab[3]);
-		origin_alt=tonumber(line_tab[4]);
-		break;
-	end
-end
-
--- take off vehicle
-LuaTakeoff();
-
---fly to origin 
-LuaFlyByGPS(origin_lat,origin_lon);
-
---set the gimbal angle. reletive vehicle head  
-LuaSetGimbalAngle(-90);
-
--- start video record
-LuaVideoStart();
-
--- read the path point 
-local target_x,target_y,target_z;
-for path in pcode_hanlder:lines() do
-	path_tab=stringSplit(path," ");
-	if path_tab[1] == "P1" then
-		target_x=tonumber(string.sub(path_tab[2],2,-1));
-		target_y=tonumber(string.sub(path_tab[3],2,-1));
-		target_z=tonumber(string.sub(path_tab[4],2,-1));
-		--[[turn the head to next point--]]
-		turnVehicleHead(target_x,target_y);
-		--[[TODO: add fly commd function--]]
-		flyToTargetPoint(target_x,target_y,target_z);
-	end
-	--[[TODO: add gimbal commd function--]]
-end
---close the pcode
-pcode_handler:close()
---stop video record
-LuaVideoStop();
-
--- go home
-LuaGoHome();
-
---[[flight done--]]
-
 ---function 
 function turnVehicleHead(target_x,target_y)
 	local current_lat,current_lon,current_alt;
@@ -128,4 +60,81 @@ function flyToTargetPoint(target_x,target_y,target_z)
 		LuaDelay(10);
 	end
 end
+
+home_path=os.getenv("HOME");
+package.path=home_path.."/AutoDJIPilot/APP/common/tools.lua";
+require "tools.lua"
+require "GEO.lua"
+
+CHECK_FLY_MAX_SPEED=2.0;
+CHECK_FLY_MIN_SPEED=0.3;
+CHECK_BREAK_BOUNDARY=2.0;
+
+PCODE_FILE_PATH="/mnt/dietpi_userdata/Path.pcode";
+
+--open the pcode file
+local pcode_handler=io.open(PCODE_FILE_PATH,"r")
+if pcode_handler == nil then
+	print("open the pcode file"..PCODE_FILE_PATH.." err")
+	return;
+end
+
+--read the origin point lat lon and alt
+origin_lat=0;
+origin_lon=0;
+origin_alt=0;
+for line in pcode_handler:lines() do
+	-- split with space
+	line_tab=stringSplit(line," ");
+	if line_tab[1] == "O:" then 
+		origin_lat=tonumber(line_tab[2]);
+		origin_lon=tonumber(line_tab[3]);
+		origin_alt=tonumber(line_tab[4]);
+		break;
+	end
+end
+
+-- take off vehicle
+LuaTakeoff();
+print("takeoff done")
+--fly to origin 
+LuaFlyByGPS(origin_lat,origin_lon);
+print("arrive start point")
+--set the gimbal angle. reletive vehicle head  
+LuaSetGimbalAngle(0,0,-90);
+print("gimbal set done")
+-- start video record
+LuaVideoStart();
+print("video started")
+-- read the path point 
+local target_x,target_y,target_z;
+for path in pcode_hanlder:lines() do
+	-- split with space
+	path_tab=stringSplit(path," ");
+	if path_tab[1] == "P1" then
+		target_x=tonumber(string.sub(path_tab[2],2,-1));
+		target_y=tonumber(string.sub(path_tab[3],2,-1));
+		target_z=tonumber(string.sub(path_tab[4],2,-1));
+		--[[turn the head to next point--]]
+		turnVehicleHead(target_x,target_y);
+		--[[TODO: add fly commd function--]]
+		flyToTargetPoint(target_x,target_y,target_z);
+	end
+	if path_tab[1]=="#Layer" then
+		print("Fly at "..path_tab[2].."layer")
+	end
+	--[[TODO: add gimbal commd function--]]
+end
+--close the pcode
+pcode_handler:close()
+--stop video record
+LuaVideoStop();
+
+-- go home
+LuaGoHome();
+
+--[[flight done--]]
+
+
+
 

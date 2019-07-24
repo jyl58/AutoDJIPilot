@@ -1,8 +1,9 @@
-package.path="/home/jyl58/AutoDJIPilot/APP/common/tools.lua;"
-require "tools.lua"
-require "geo.lua"
+home_path=os.getenv("HOME");
+package.path=home_path.."/AutoDJIPilot/APP/common/tools.lua";
+require "tools"
+require "GEO"
 
-PCODE_FILE_PATH="/home/jyl58/AutoDJIPilot/APP/BuildCheck/PathCode/Path.pcode"
+PCODE_FILE_PATH="/mnt/dietpi_userdata/Path.pcode";
 
 --open the pcode file
 local pcode_handler=io.open(PCODE_FILE_PATH,"r")
