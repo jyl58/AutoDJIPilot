@@ -8,13 +8,34 @@
 #include <fstream>
 #include <iostream>
 #include "LuaParser.h"
-#include "LuaInterface.h"
 #include "Message.h"
 
 std::thread* LuaParser::_lua_script_run_thread=nullptr;
 lua_State* LuaParser::_lua=nullptr;
 bool 	LuaParser::_lua_script_thread_running=false;
-
+const reg_lua_function_t LuaParser::reg_tabe[]={
+	{"LuaTakeoff",&LuaInterface::LuaTakeoff},
+	{"Lualand",&LuaInterface::Lualand},
+	{"LuaFlyByGPS",&LuaInterface::LuaFlyByGPS},
+	{"LuaFlyByVelocity",&LuaInterface::LuaFlyByVelocity},
+	{"LuaFlyByBearingAndDistance",&LuaInterface::LuaFlyByBearingAndDistance},
+	{"LuaTurnHead",&LuaInterface::LuaTurnHead},
+	{"LuaClimbTo",&LuaInterface::LuaClimbTo},
+	{"LuaClimbBy",&LuaInterface::LuaClimbBy},
+	{"LuaGoHome",&LuaInterface::LuaGoHome},
+	{"LuaDelay",&LuaInterface::LuaDelay},
+	{"LuaGetLocationGPS",&LuaInterface::LuaGetLocationGPS},
+	{"LuaGetHead",&LuaInterface::LuaGetHead},
+	{"LuaGetAlt",&LuaInterface::LuaGetAlt},
+	{"LuaCall",&LuaInterface::LuaCall},
+	{"LuaShootPhoto",&LuaInterface::LuaShootPhoto},
+	{"LuaVideoStart",&LuaInterface::LuaVideoStart},
+	{"LuaVideoStop",&LuaInterface::LuaVideoStop},
+	{"LuaCameraZoom",&LuaInterface::LuaCameraZoom},
+	{"LuaSetGimbalAngle",&LuaInterface::LuaSetGimbalAngle},
+	{"LuaGetGimbalAngle",&LuaInterface::LuaGetGimbalAngle},
+	{"LuaTestMotor",&LuaInterface::LuaTestMotor}
+};
 LuaParser::LuaParser(){
 	if(!LuaParserInit()){
 		DDBUG("Lua Parser creat err");
@@ -47,7 +68,7 @@ bool LuaParser::LuaParserInit(){
 	luaL_openlibs(_lua);
 	
 	//register the lua script function
-	lua_register(_lua,"LuaTakeoff",&LuaInterface::LuaTakeoff);
+	/*lua_register(_lua,"LuaTakeoff",&LuaInterface::LuaTakeoff);
 	lua_register(_lua,"Lualand",&LuaInterface::Lualand);
 	lua_register(_lua,"LuaFlyByGPS",&LuaInterface::LuaFlyByGPS);
 	lua_register(_lua,"LuaFlyByVelocity",&LuaInterface::LuaFlyByVelocity);
@@ -67,7 +88,11 @@ bool LuaParser::LuaParserInit(){
 	lua_register(_lua,"LuaCameraZoom",&LuaInterface::LuaCameraZoom);
 	lua_register(_lua,"LuaSetGimbalAngle",&LuaInterface::LuaSetGimbalAngle);
 	lua_register(_lua,"LuaGetGimbalAngle",&LuaInterface::LuaGetGimbalAngle);
-	lua_register(_lua,"LuaTestMotor",&LuaInterface::LuaTestMotor);
+	lua_register(_lua,"LuaTestMotor",&LuaInterface::LuaTestMotor);*/
+	
+	for(int i=0; i< (sizeof(reg_tabe)/sizeof(reg_tabe[0]));  i++){
+		lua_register(_lua,reg_tabe[i]._name,reg_tabe[i]._func);
+	}
 	
 	return true;
 }

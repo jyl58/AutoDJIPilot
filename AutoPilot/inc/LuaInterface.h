@@ -14,6 +14,8 @@
 #define LUA_SUCESS 1
 #define LUA_FAIL 0
 
+typedef int (*reg_function)(lua_State*);
+
 class FlightCore;
 class LuaInterface
 {

@@ -4,6 +4,12 @@
 #include "lua.hpp"
 #include "FlightCore.h"
 #include "FlightStatus.h"
+#include "LuaInterface.h"
+
+typedef struct {
+	char _name[50];
+	reg_function _func;
+}reg_lua_function_t;
 
 class FlightCore;
 class LuaParser{
@@ -40,5 +46,8 @@ private:
 	static std::thread* _lua_script_run_thread;
 	/*lua script thread running flag*/
 	static bool _lua_script_thread_running;
+	
+	
+	static const reg_lua_function_t reg_tabe[]; 
 };
 
