@@ -767,8 +767,9 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 bool
 FlightCore::djiHover(){
 	if(_flightStatus == VehicleStatus::FlightStatus::IN_AIR){
-		//vehicle in air set pos offset 0,0,0 and velocity 0,0,0
-		djiMoveByPosOffset(0,0,0,0);
+		//vehicle in air set pos offset 0,0,0 and velocity 0,0,0 and head to current head
+		float current_yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;
+		djiMoveByPosOffset(0,0,0,current_yaw_in_rad*RAD2DEG);
 		djiMoveByVelocity(0,0,0);
 	}
 	return true;
