@@ -63,8 +63,8 @@ end
 
 home_path=os.getenv("HOME");
 package.path=home_path.."/AutoDJIPilot/APP/common/tools.lua";
-require "tools.lua"
-require "GEO.lua"
+require "tools"
+require "GEO"
 
 CHECK_FLY_MAX_SPEED=2.0;
 CHECK_FLY_MIN_SPEED=0.3;
