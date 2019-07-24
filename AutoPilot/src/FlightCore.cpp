@@ -629,7 +629,7 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 bool	
 FlightCore::djiMoveByBearingAndDistance(float bearing,float distance){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Run reletive fly ,but the vehicle is not in air.");	
+		DWAR("Run reletive fly, but the vehicle is not in air.");	
 		return false;
 	}
 	double lat;

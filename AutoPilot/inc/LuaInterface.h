@@ -65,7 +65,7 @@ public:
 	/********************************
 	* pos fly function for lua script
 	* param: target distance and bearing
-	* unit: m,deg
+	* unit: m,deg(-180,180) 
 	********************************/
 	static int LuaFlyByBearingAndDistance(lua_State* lua);
 

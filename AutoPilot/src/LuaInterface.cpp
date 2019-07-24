@@ -130,7 +130,7 @@ int LuaInterface::LuaFlyByBearingAndDistance(lua_State* lua){
 	}
 	float bearing=luaL_checknumber(lua,1);// get the target bearing uint:deg
 	float distance=luaL_checknumber(lua,2);// get the target distance
-	if(bearing<0 || bearing>360){
+	if(std::fabs(bearing)>180){
 		DWAR("Target bearing is out the range.");
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
