@@ -19,6 +19,7 @@ void* Commander::dynamic_lib_handler=nullptr;
 bool Commander::main_thread_need_exit=false;
 bool Commander::tcp_link_need_disconnect=false;
 std::vector<std::string> Commander::_cmd_and_param;
+std::string  Commander::_env_home;
 
 const command_function_t Commander::cmd_table[]={
 	{"state",Commander::PrintFlightStatusCMD},
@@ -51,7 +52,6 @@ const char* Commander::cmd_description[]={
 	"\t\tPrint this help message.",
 	"\t\tExit the application."
 };
-
 void 
 Commander::AutopilotSystemInit(const std::string& config_file_path){
 	//first  init log sub thread for record sys message
@@ -100,6 +100,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		DERR("Flight Console Server init err!");
 		exit(1);
 	}
+	_env_home=getenv("HOME");
 }
 void 
 Commander::AutopilotSystemExit(){
@@ -278,10 +279,21 @@ Commander::LoadPayloadPlugin(std::ostringstream& outMsg){
 void 
 Commander::RunLuaScript(std::ostringstream& outMsg){
 	if(_cmd_and_param.size()<2){
-		outMsg<<"Run CMD need a param for lua script file path"<<std::endl;
+		outMsg<<"Run CMD need a param for lua script file path."<<std::endl;
 		return;
 	}
-	std::ifstream lua_file_handle(_cmd_and_param.at(1));
+	//auto add file abslutely file path
+	std::string file_absolute_path=_cmd_and_param.at(1);
+	if(file_absolute_path.find("/")==std::string::npos){
+		//just give a file name,so find in default directory
+		std::string default_bin_path= _env_home+DEFAULT_BIN_DIRECTORY+file_absolute_path;
+		if(access(default_bin_path.c_str(),F_OK) == -1){
+			outMsg<<"Do not find the "<<file_absolute_path<<" in default bin directory."<<std::endl;
+			return;
+		}
+		file_absolute_path=default_bin_path;
+	}
+	std::ifstream lua_file_handle(file_absolute_path);
 	if (!lua_file_handle.is_open()){
 		outMsg<<"Lua script file open err."<<std::endl;
 		return;
@@ -289,7 +301,7 @@ Commander::RunLuaScript(std::ostringstream& outMsg){
 	lua_file_handle.close();
 
 	if(_lua_parser == nullptr){
-		outMsg<<"Lua script parser is not exist"<<std::endl;
+		outMsg<<"Lua script parser is not exist."<<std::endl;
 		return;
 	}
 	if(LuaParser::LuaScriptThreadRunning()){
@@ -297,7 +309,7 @@ Commander::RunLuaScript(std::ostringstream& outMsg){
 		return;
 	}
 	// creat a new thread for run user's lua script 
-	_lua_parser->LuaScriptOpenAndRun(_cmd_and_param.at(1),true);
+	_lua_parser->LuaScriptOpenAndRun(file_absolute_path,true);
 }
 void 
 Commander::PauseRunLuaScript(std::ostringstream& outMsg){
