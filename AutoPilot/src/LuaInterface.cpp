@@ -154,7 +154,7 @@ int LuaInterface::LuaTurnHead(lua_State* lua){
 	// write message to log buff
 	FLIGHTLOG("Turn head :" + std::to_string(target_head)+"deg.");
 	
-	if(target_head < 0 || target_head > 360){
+	if(std::fabs(target_head) > 180){
 		DWAR("Target head is out the range");
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;

@@ -72,7 +72,7 @@ public:
 	/********************************
 	* turn head function for lua script
 	* param: target head
-	* unit: deg
+	* unit: deg (-180,180)
 	********************************/
 	static int LuaTurnHead(lua_State* lua);
 
