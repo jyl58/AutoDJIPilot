@@ -9,12 +9,10 @@ function turnVehicleHead(target_x,target_y)
 		
 	remaing_x=target_x-current_x_reletive_origin;
 	remaing_y=target_y-current_y_reletive_origin;
-	if (remaing_y>0.01) then
-		target_head_deg=math.deg(GEO.wrap_2PI(math.atan(remaing_x,remaing_y)));
-		local current_head_deg=LuaGetHead();
-		if (math.abs(current_head_deg-target_head_deg) > 1.0 ) then
-			LuaTurnHead(target_head_deg);
-		end
+	target_head_deg=math.deg(GEO.wrap_PI(math.atan(remaing_y,remaing_x)));
+	local current_head_deg=LuaGetHead();
+	if (math.abs(current_head_deg-target_head_deg) > 1.0 ) then
+		LuaTurnHead(target_head_deg);
 	end
 end
 
