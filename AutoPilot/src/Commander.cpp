@@ -123,7 +123,6 @@ Commander::AutopilotSystemExit(){
 	if(dynamic_lib_handler != nullptr)
 		dlclose(dynamic_lib_handler);
 }
-
 /*
 *	used to split the user input to cmd and param
 *	return : true if split successful ,false 

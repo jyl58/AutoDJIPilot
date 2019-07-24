@@ -69,7 +69,6 @@ private:
 	
 	static std::string      _env_home;
 	
-	
 	static const command_function_t cmd_table[];
 	static const char* cmd_description[];
 	static std::vector<std::string> _cmd_and_param;
