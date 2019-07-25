@@ -15,7 +15,7 @@
 #define AUTO_DBUG 1
 //debug
 #define MESSAGEFORMATE __FILE__<<" "<<__FUNCTION__<<" "<<__LINE__<<":"
-#define DERR(msg)   \
+#define DERR(msg)   										\
 	{														\
 		if (AUTO_DBUG) std::cout<<"[ERR]"<<MESSAGEFORMATE<<msg<<std::endl; \
 		throw std::runtime_error(msg);						\
@@ -25,7 +25,7 @@
 #define DWAR(msg) 											\
 	{														\
 		if (AUTO_DBUG) std::cout<<"[WAR]"<<MESSAGEFORMATE<<msg<<std::endl;	\
-		FlightLog::writeLogBufferWithLabel(msg);										\
+		FlightLog::writeLogBufferWithLabel(msg);			\
 															\
 	}
 #define DDBUG(msg) 											\

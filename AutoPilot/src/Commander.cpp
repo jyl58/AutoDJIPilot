@@ -221,7 +221,7 @@ Commander::PrintFlightStatusCMD(int print_fd){
 	NOTICE_MSG(print_fd,"GPS Message:    "+ std::to_string(gps_details.hdop)+"(hdop), "+
 											std::to_string(gps_details.hacc)+"(hps), "+
 											std::to_string(gps_details.fix) +"(fix), "+
-											std::to_string(gps_details.usedGPS)+"(number),"+
+											std::to_string(gps_details.usedGPS)+"(number), "+
 											std::to_string(gps_signal_level)+"(sig(0~5))");
 											
 	NOTICE_MSG(print_fd,"Velocity(m/s):  " +std::to_string(velocity.data.x)+", "+std::to_string(velocity.data.y)+", "+std::to_string(velocity.data.z));
@@ -250,7 +250,7 @@ Commander::ZoomCamera(int print_fd){
 		_flight_core->djiCameraZoomByPos((uint16_t)std::stoi(_cmd_and_param.at(2)));
 	}else if(_cmd_and_param.at(1).compare("speed")){
 		if(_cmd_and_param.at(2).empty()){
-			NOTICE_MSG(print_fd,"Zoom speed need a value as argument.(e.g. zoom speed 50)");
+			NOTICE_MSG(print_fd,"Zoom speed need a value as argument(e.g. zoom speed 50).");
 			return;
 		}
 		_flight_core->djiCameraZoomBySpeed((int16_t)std::stoi(_cmd_and_param.at(2)));

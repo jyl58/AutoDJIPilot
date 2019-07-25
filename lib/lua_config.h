@@ -1,3 +1,10 @@
+/*
+* @file Lua_config.h
+* @author: JYL
+* @email:jiyingliang369@126.com
+* @date: 2019.07.25
+*
+*/
 #ifndef lua_config_h
 #define lua_config_h
 

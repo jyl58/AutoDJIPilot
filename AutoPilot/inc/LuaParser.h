@@ -47,7 +47,6 @@ private:
 	/*lua script thread running flag*/
 	static bool _lua_script_thread_running;
 	
-	
 	static const reg_lua_function_t reg_tabe[]; 
 };
 

@@ -153,7 +153,7 @@ ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int ev
 void 
 ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int events){
 	if(EV_ERROR & events){
-		DWAR("Event err.");
+		DWAR("EV event err.");
 		return;
 	}
 	char buffer[TCP_BUFFER_MAX_SIZE]={0};

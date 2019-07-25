@@ -183,7 +183,7 @@ void
 LuaParser::LuaRunGoOn(const std::string& reason){
 	if(_lua_script_thread_running){
 		//set pause exit flag to true 
-		FLIGHTLOG("Lua script running Go On by "+reason);
+		FLIGHTLOG("Lua script running go on by "+reason);
 		LuaInterface::_need_go_on_run=true;
 	}
 }
