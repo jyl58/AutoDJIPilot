@@ -8,7 +8,9 @@
 #pragma once
 #include <iostream>
 #include <stdio.h>
+#include <sys/socket.h>
 #include "FlightLog.h"
+#include "lua_config.h"
 
 #define AUTO_DBUG 1
 //debug
@@ -26,8 +28,28 @@
 		FlightLog::writeLogBufferWithLabel(msg);										\
 															\
 	}
-#define DDBUG(msg) 					\
+#define DDBUG(msg) 											\
 	if(AUTO_DBUG)	{std::cout<<"[DBUG]"<<msg<<std::endl; }\
 
 // log 
 #define FLIGHTLOG(msg) FlightLog::writeLogBuffer(msg)
+
+//notice 
+inline void NOTICE_MSG(int fd,std::string msg){
+	if(fd == -1){							
+		std::cout<<msg<<std::endl;			
+	}else{									
+		send(fd,msg.c_str(),msg.size(),0);	
+		send(fd,"\n",1,0);					
+	}		
+}
+//out logo
+inline void LOGO(int fd,std::string msg){
+	if(fd == -1){							
+		std::cout<<msg<<std::flush;		
+	}else{									
+		send(fd,msg.c_str(),msg.size(),0);
+	}		
+}
+//logo
+extern const std::string AutoDjiLogo;

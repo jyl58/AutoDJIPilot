@@ -20,13 +20,13 @@ bool Commander::main_thread_need_exit=false;
 bool Commander::tcp_link_need_disconnect=false;
 std::vector<std::string> Commander::_cmd_and_param;
 std::string  Commander::_env_home;
-
+//note: name length is little 10 char
 const command_function_t Commander::cmd_table[]={
 	{"state",Commander::PrintFlightStatusCMD},
 	{"config",Commander::PrintConfigMsgCMD},
 	{"run",Commander::RunLuaScript},
 	{"pause",Commander::PauseRunLuaScript},
-	{"continue",Commander::GoOnRunLuaScript},
+	{"go",Commander::GoOnRunLuaScript},
 	{"break",Commander::BreakRunLuaScript},
 	{"load",Commander::LoadPayloadPlugin},
 	{"photo",Commander::ShootPhoto},
@@ -42,7 +42,7 @@ const char* Commander::cmd_description[]={
 	"\t\tPrint the input config message in config.lua file.",
 	"\t\tRun the external lua script file ,need a *.lua file path as a argument.",
 	"\t\tPause the Runing lua script.",
-	"\t\tcontinue run the lua script.",
+	"\t\tContinue run the lua script.",
 	"\t\tInterrupt run the lua script.",
 	"\t\tLoad the user's Payload control plugin,need a *.so file path as a argument.",
 	"\t\tTake a photo use dji camera.",
@@ -150,34 +150,35 @@ Commander::splitCMDAndParam(const std::string& input_stream){
 	return true;
 }
 void 
-Commander::HelpCommandCMD(std::ostringstream& outMsg){
+Commander::HelpCommandCMD(int print_fd){
 	for(int i=0; i<(sizeof(cmd_table)/sizeof(cmd_table[0]));  i++){
-		outMsg<<" "<<cmd_table[i].cmd_name<<cmd_description[i]<<std::endl;
+		std::string cmd_name=cmd_table[i].cmd_name;
+		NOTICE_MSG(print_fd,"\t" + cmd_name + cmd_description[i]);
 	}
 }
 void 
-Commander::ExitSystemCMD(std::ostringstream& outMsg){
+Commander::ExitSystemCMD(int print_fd){
 	main_thread_need_exit=true;
 }
 void 
-Commander::PrintConfigMsgCMD(std::ostringstream& outMsg){
+Commander::PrintConfigMsgCMD(int print_fd){
 	if(_linux_setup==nullptr){
-		outMsg<<"config file parse err!"<<std::endl;
+		NOTICE_MSG(print_fd,"config file parse err!");
 		return ;
 	}
-	outMsg<<"**********Config Msg****************"<<std::endl;
-	outMsg<<"DJI app id:           	    "<<_linux_setup->getDJIAppId()<<std::endl;
-	outMsg<<"DJI app key:          	    "<<_linux_setup->getDJIAppKey()<<std::endl;
-	outMsg<<"DJI device port:      	    "<<_linux_setup->getDJIDevicePort()<<std::endl;
-	outMsg<<"DJI device baudrate:  	    "<<_linux_setup->getDJIDevicePortBaudrate()<<std::endl;
-	outMsg<<"MAV device port:            "<<_linux_setup->getMAVlinkDevPort()<<std::endl;
-	outMsg<<"MAV device port baudrate:   "<<_linux_setup->getMAVlinkDevPortBaudrate()<<std::endl;
-	outMsg<<"************************************"<<std::endl;
+	NOTICE_MSG(print_fd,"**********Config Msg****************");
+	NOTICE_MSG(print_fd,"DJI app id:           	    " + std::to_string(_linux_setup->getDJIAppId()));
+	NOTICE_MSG(print_fd,"DJI app key:          	    " + _linux_setup->getDJIAppKey());
+	NOTICE_MSG(print_fd,"DJI device port:      	    " + _linux_setup->getDJIDevicePort());
+	NOTICE_MSG(print_fd,"DJI device baudrate:  	    " + std::to_string(_linux_setup->getDJIDevicePortBaudrate()));
+	NOTICE_MSG(print_fd,"MAV device port:           " + _linux_setup->getMAVlinkDevPort());
+	NOTICE_MSG(print_fd,"MAV device port baudrate:  " + std::to_string(_linux_setup->getMAVlinkDevPortBaudrate()));
+	NOTICE_MSG(print_fd,"************************************");
 }
 void 
-Commander::PrintFlightStatusCMD(std::ostringstream& outMsg){
+Commander::PrintFlightStatusCMD(int print_fd){
 	if(_flight_core==nullptr){
-		outMsg<<"Flight Core is't run!"<<std::endl;
+		NOTICE_MSG(print_fd,"Flight Core is't run!");
 		return;
 	}
 	TypeMap<TOPIC_STATUS_FLIGHT>::type 		flightStatus;
@@ -204,51 +205,63 @@ Commander::PrintFlightStatusCMD(std::ostringstream& outMsg){
 		_flight_core->getGimbalAngle(&gimbal_angle);
 	}
 	
-	outMsg<<"**********Flight Status**************"<<std::endl;
-	outMsg<<"Flight Mode:    "<<(int)display_mode<<std::endl;
-	outMsg<<"Status:         "<<(int)flightStatus<<std::endl;
-	outMsg<<"Battery Info:   "<<(int)battery_info.voltage*0.001<<"(v), "<<(int)battery_info.current*0.001<<"(A), "<<(int)battery_info.percentage<<"%"<<std::endl;
-	outMsg<<"Positon(LLA):   "<<current_lat_lon.latitude*RAD2DEG<<"(deg),"<<current_lat_lon.longitude*RAD2DEG<<"(deg),"<<altitude_fusioned<<"(m)"<<std::endl;
-	outMsg<<"Bearing:        "<<vehicle_head<<"(deg)"<<std::endl;
-	outMsg<<"GPS Message:    "<<gps_details.hdop<<"(hdop),"<<gps_details.hacc<<"(hps),"<<gps_details.fix<<"(fix),"<<(int)gps_details.usedGPS<<"(number),"<<(int)gps_signal_level<<"(sig(0~5))"<<std::endl;
-	outMsg<<"Velocity(m/s):  "<<velocity.data.x<<", "<<velocity.data.y<<", "<<velocity.data.z<<std::endl;
+	NOTICE_MSG(print_fd,"**********Flight Status**************");
+	NOTICE_MSG(print_fd,"Flight Mode:    "+ std::to_string(display_mode));
+	NOTICE_MSG(print_fd,"Status:         "+ std::to_string(flightStatus));
+	NOTICE_MSG(print_fd,"Battery Info:   "+ std::to_string(battery_info.voltage*0.001)+"(V), "+
+											std::to_string(battery_info.current*0.001)+"(A),"+
+											std::to_string(battery_info.percentage)+"%");
+											
+	NOTICE_MSG(print_fd,"Positon(LLA):   "+ std::to_string(current_lat_lon.latitude*RAD2DEG)+"(deg), "+
+											std::to_string(current_lat_lon.longitude*RAD2DEG)+"(deg), "+
+											std::to_string(altitude_fusioned)+"(m)");
+											
+	NOTICE_MSG(print_fd,"Head:           "+ std::to_string(vehicle_head)+"(deg)");
+	
+	NOTICE_MSG(print_fd,"GPS Message:    "+ std::to_string(gps_details.hdop)+"(hdop), "+
+											std::to_string(gps_details.hacc)+"(hps), "+
+											std::to_string(gps_details.fix) +"(fix), "+
+											std::to_string(gps_details.usedGPS)+"(number),"+
+											std::to_string(gps_signal_level)+"(sig(0~5))");
+											
+	NOTICE_MSG(print_fd,"Velocity(m/s):  " +std::to_string(velocity.data.x)+", "+std::to_string(velocity.data.y)+", "+std::to_string(velocity.data.z));
 	if(gimbal_status.mountStatus){
-	uint8_t gimbal_mode=_flight_core->getGimbalMode();
-	outMsg<<"Gimbal Mode:	"<<(int)gimbal_mode<<std::endl;
-	outMsg<<"Gimbal angle(rpy):"<<gimbal_angle.y<<"(deg),"<<gimbal_angle.x<<"(deg),"<<gimbal_angle.z<<"(deg)"<<std::endl;
+		uint8_t gimbal_mode=_flight_core->getGimbalMode();
+		NOTICE_MSG(print_fd,"Gimbal Mode:	   "+std::to_string(gimbal_mode));
+		NOTICE_MSG(print_fd,"Gimbal angle(rpy):"+std::to_string(gimbal_angle.y)+"(deg), "+std::to_string(gimbal_angle.x)+"(deg), "+std::to_string(gimbal_angle.z)+"(deg)");
 	}
-	outMsg<<"************************************"<<std::endl;
+	NOTICE_MSG(print_fd,"************************************");
 }
 void 
-Commander::ZoomCamera(std::ostringstream& outMsg){
+Commander::ZoomCamera(int print_fd){
 	if(_flight_core==nullptr){
-		outMsg<<"Flight Core is't run!"<<std::endl;
+		NOTICE_MSG(print_fd,"Flight Core is't run!");
 		return;
 	}
 	if(_cmd_and_param.at(1).empty()){
-		outMsg<<"Zoom CMD need a subcmd as argument."<<std::endl;
+		NOTICE_MSG(print_fd,"Zoom CMD need a subcmd as argument.");
 		return;
 	}
 	if(_cmd_and_param.at(1).compare("pos")){
 		if(_cmd_and_param.at(2).empty()){
-			outMsg<<"Zoom pos need a value as argument.(e.g. zoom pos 500)"<<std::endl;
+			NOTICE_MSG(print_fd,"Zoom CMD need a subcmd as argument.");
 			return;
 		}
 		_flight_core->djiCameraZoomByPos((uint16_t)std::stoi(_cmd_and_param.at(2)));
 	}else if(_cmd_and_param.at(1).compare("speed")){
 		if(_cmd_and_param.at(2).empty()){
-			outMsg<<"Zoom speed need a value as argument.(e.g. zoom speed 50)"<<std::endl;
+			NOTICE_MSG(print_fd,"Zoom speed need a value as argument.(e.g. zoom speed 50)");
 			return;
 		}
 		_flight_core->djiCameraZoomBySpeed((int16_t)std::stoi(_cmd_and_param.at(2)));
 	}else if (_cmd_and_param.at(1).compare("step")){
 		_flight_core->djiCameraZoomBystep((int16_t)std::stoi(_cmd_and_param.at(2)));
 	}else{
-		outMsg<<"Don't support zoom's subcmd: "<<_cmd_and_param[1]<<std::endl;
+		NOTICE_MSG(print_fd,"Don't support zoom's subcmd: "+_cmd_and_param.at(1));
 	}
 }
 void 
-Commander::LoadPayloadPlugin(std::ostringstream& outMsg){
+Commander::LoadPayloadPlugin(int print_fd){
 	if(_cmd_and_param.at(1).empty()){
 		DWAR("Load CMD need a param for dynamic lib path.");
 		return;
@@ -276,9 +289,9 @@ Commander::LoadPayloadPlugin(std::ostringstream& outMsg){
 	}
 }
 void 
-Commander::RunLuaScript(std::ostringstream& outMsg){
+Commander::RunLuaScript(int print_fd){
 	if(_cmd_and_param.size()<2){
-		outMsg<<"Run CMD need a param for lua script file path."<<std::endl;
+		NOTICE_MSG(print_fd,"Run CMD need a param for lua script file path.");
 		return;
 	}
 	//auto add file abslutely file path
@@ -287,61 +300,56 @@ Commander::RunLuaScript(std::ostringstream& outMsg){
 		//just give a file name,so find in default directory
 		std::string default_bin_path= _env_home+DEFAULT_BIN_DIRECTORY+file_absolute_path;
 		if(access(default_bin_path.c_str(),F_OK) == -1){
-			outMsg<<"Do not find the "<<file_absolute_path<<" in default bin directory."<<std::endl;
+			NOTICE_MSG(print_fd,"Do not find the "+file_absolute_path+" in default bin directory.");
 			return;
 		}
 		file_absolute_path=default_bin_path;
 	}
 	std::ifstream lua_file_handle(file_absolute_path);
 	if (!lua_file_handle.is_open()){
-		outMsg<<"Lua script file open err."<<std::endl;
+		NOTICE_MSG(print_fd,"Lua script file open err.");
 		return;
 	}
 	lua_file_handle.close();
 
 	if(_lua_parser == nullptr){
-		outMsg<<"Lua script parser is not exist."<<std::endl;
+		NOTICE_MSG(print_fd,"Lua script parser is not exist.");
 		return;
 	}
 	if(LuaParser::LuaScriptThreadRunning()){
-		outMsg<<"There is a running lua script thread ,need waiting or break it."<<std::endl;
+		NOTICE_MSG(print_fd,"There is a running lua script thread ,need waiting or break it.");
 		return;
 	}
 	// creat a new thread for run user's lua script 
-	_lua_parser->LuaScriptOpenAndRun(file_absolute_path,true);
+	_lua_parser->LuaScriptOpenAndRun(file_absolute_path,print_fd,true);
 }
 void 
-Commander::PauseRunLuaScript(std::ostringstream& outMsg){
+Commander::PauseRunLuaScript(int print_fd){
 	LuaParser::LuaRunPause("console pause cmd");
 }
 void 
-Commander::GoOnRunLuaScript(std::ostringstream& outMsg){
+Commander::GoOnRunLuaScript(int print_fd){
 	LuaParser::LuaRunGoOn("console continue cmd");
 }
 void 
-Commander::BreakRunLuaScript(std::ostringstream& outMsg){
-	/*std::cout<<"Are you sure interrupt run the lua file?(yes/no)"<<std::endl;
-	std::cout<<"DJI_AUTO>"
-	std::string input;
-	getline(std::cin,input);
-	if(input.compare("yes")==0)*/
+Commander::BreakRunLuaScript(int print_fd){
 	LuaParser::LuaInterruptRuning("Console run break cmd.");
 }
 
 void 
-Commander::SetGimbal(std::ostringstream& outMsg){
+Commander::SetGimbal(int print_fd){
 	if(_flight_core==nullptr){
-		outMsg<<"Flight Core is't run!"<<std::endl;
+		NOTICE_MSG(print_fd,"Flight Core is't run!");
 		return;
 	}
 	TypeMap<TOPIC_GIMBAL_STATUS>::type		gimbal_status;
 	_flight_core->getGimbalStatus(&gimbal_status);
 	if(gimbal_status.mountStatus==0){
-		outMsg<<"Gimbal is not mount!"<<std::endl;
+		NOTICE_MSG(print_fd,"Gimbal is not mount!");
 		return;
 	}
 	if(_cmd_and_param.size()<2){
-		outMsg<<"gimbal CMD need a argument (angle|speed)"<<std::endl;
+		NOTICE_MSG(print_fd,"gimbal CMD need a argument (angle|speed).");
 		return;
 	}
 
@@ -353,48 +361,48 @@ Commander::SetGimbal(std::ostringstream& outMsg){
 	}else if(_cmd_and_param.at(1).compare("speed") == 0){
 		//TODO: add speed 	
 	}else{
-		outMsg<<"Don't support gimbal's subcmd: "<<_cmd_and_param.at(1)<<std::endl;
+		NOTICE_MSG(print_fd,"Don't support gimbal's subcmd: "+_cmd_and_param.at(1));
 	}
 }
 void 
-Commander::RunVideo(std::ostringstream& outMsg){
+Commander::RunVideo(int print_fd){
 	if(_flight_core==nullptr){
-		outMsg<<"Flight Core is't run!"<<std::endl;
+		NOTICE_MSG(print_fd,"Flight Core is't run!");
 		return;
 	}
 	if(_cmd_and_param.size()<2){
-		outMsg<<"video CMD need a argument (start|stop)"<<std::endl;
+		NOTICE_MSG(print_fd,"video CMD need a argument (start|stop).");
 		return;
 	}
 	if(_cmd_and_param.at(1).compare("start")==0){
 		_flight_core->djiVideoStart();
-		outMsg<<"video start..."<<std::endl;
+		NOTICE_MSG(print_fd,"video start...");
 	}else if (_cmd_and_param.at(1).compare("stop")==0){
 		_flight_core->djiVideoStop();
-		outMsg<<"video stop"<<std::endl;
+		NOTICE_MSG(print_fd,"video stop");
 	}else{
-		outMsg<<"Don't support video's subcmd: "<<_cmd_and_param[1]<<std::endl;
+		NOTICE_MSG(print_fd,"Don't support video's subcmd: "+_cmd_and_param.at(1));
 	}
 }
 void 
-Commander::ShootPhoto(std::ostringstream& outMsg){
+Commander::ShootPhoto(int print_fd){
 	if(_flight_core==nullptr){
-		outMsg<<"Flight Core is't run!"<<std::endl;
+		NOTICE_MSG(print_fd,"Flight Core is't run!");
 		return;
 	}	
 	_flight_core->djiShootPhoto();
 }
 void 
-Commander::RunCommand(std::ostringstream& outMsg){
+Commander::RunCommand(int print_fd){
 	int cmd_index=0;
 	for(cmd_index=0; cmd_index<(sizeof(cmd_table)/sizeof(cmd_table[0]));  cmd_index++){
 		if(_cmd_and_param.front().compare(cmd_table[cmd_index].cmd_name) == 0){
 			//call the cmd function
-			cmd_table[cmd_index].cmd_function(outMsg);
+			cmd_table[cmd_index].cmd_function(print_fd);
 			break;
 		}
 	}
 	if(cmd_index == (sizeof(cmd_table)/sizeof(cmd_table[0]))){
-		outMsg<<"Input CMD: "<<_cmd_and_param.front()<<" is't support yet."<<std::endl;
+		NOTICE_MSG(print_fd,"Input CMD: "+_cmd_and_param.front()+" is't support yet.");
 	}
 }

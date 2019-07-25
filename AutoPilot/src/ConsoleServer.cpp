@@ -19,7 +19,7 @@ ev_io ConsoleServer::_tcp_listen;
 struct ev_loop* ConsoleServer::_ev_loop=ev_default_loop(0);
 std::thread* ConsoleServer::_console_server_thread=nullptr;
 int ConsoleServer::_socket_fd;
-const std::string ConsoleServer::console_server_logo="DJI_Auto>";
+//const std::string ConsoleServer::console_server_logo="DJI_Auto>";
 std::vector<socket_connect_t*> ConsoleServer::_connect_list;
 ConsoleServer::ConsoleServer(){
 
@@ -148,7 +148,7 @@ ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int ev
 	ev_io_init(&temp_connect->_tcp_talk,ConsoleServer::tCPRead,link_fd,EV_READ);
 	ev_io_start(main_loop,&temp_connect->_tcp_talk);
 	//send logo
-	send(link_fd,console_server_logo.c_str(),console_server_logo.size(),0);
+	send(link_fd,AutoDjiLogo.c_str(),AutoDjiLogo.size(),0);
 }
 void 
 ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int events){
@@ -173,7 +173,7 @@ ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int eve
 	std::string rc_input(buffer);
 	//response enter("\n")
 	if(rc_input.compare("\n")==0){
-		send(client_r->fd,console_server_logo.c_str(),console_server_logo.size(),0);
+		send(client_r->fd,AutoDjiLogo.c_str(),AutoDjiLogo.size(),0);
 		return;	
 	}
 	//erase the last enter symbal("\n")
@@ -181,20 +181,12 @@ ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int eve
 	if(!Commander::splitCMDAndParam(rc_input)){
 		std::string msg("Input command format err.\n");
 		send(client_r->fd,msg.c_str(),msg.size(),0);
-		send(client_r->fd,console_server_logo.c_str(),console_server_logo.size(),0);
+		send(client_r->fd,AutoDjiLogo.c_str(),AutoDjiLogo.size(),0);
 		return;
 	}
-	std::ostringstream outMsg(std::ios::app);
-	outMsg.clear();
 	// run cmd
-	Commander::RunCommand(outMsg);
-	//send to client
-	outMsg.seekp(0,std::ios::end);
-	int len=outMsg.tellp();
-	outMsg.seekp(0,std::ios::beg);
-	//send cmmd return message to tcp
-	send(client_r->fd,(void*)outMsg.str().c_str(),len,0);
-	send(client_r->fd,console_server_logo.c_str(),console_server_logo.size(),0);
+	Commander::RunCommand(client_r->fd);
+	send(client_r->fd,AutoDjiLogo.c_str(),AutoDjiLogo.size(),0);
 	if(Commander::tcp_link_need_disconnect){
 		closeLinkAndStopIoEvent(main_loop,client_r);
 		FLIGHTLOG("Disconnect link by cmd.");

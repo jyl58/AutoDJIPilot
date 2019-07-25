@@ -21,7 +21,7 @@ public:
 	/*parser init funcion*/	
 	bool LuaParserInit();
 	/*open lua script */
-	bool LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool need_new_thread=false);
+	bool LuaScriptOpenAndRun(const std::string &lua_file_name_path,int pint_fd=-1,bool need_new_thread=false);
 	/*interrupt runing script */
 	static void LuaInterruptRuning(const std::string& reason);
 	/*pause the lua script run,untill command to go on */

@@ -44,7 +44,6 @@ private:
 	static int _socket_fd;
 	static int _talk_link_fd;
 	const char* _port=SERVICE_PORT;
-	static const std::string console_server_logo;
 	/*cmd and parm*/
 	std::vector<std::string>_cmd_and_param;
 	

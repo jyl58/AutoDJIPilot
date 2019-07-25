@@ -12,6 +12,7 @@ project(lua-5.3.5)
 
 include_directories(
 src/
+../
 )
 
 SET(LUA_LIB_SRCS

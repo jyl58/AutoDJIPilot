@@ -9,6 +9,8 @@
 #include <iostream>
 #include "LuaParser.h"
 #include "Message.h"
+//global var for lua print function
+int luaSocketPrintFd;
 
 std::thread* LuaParser::_lua_script_run_thread=nullptr;
 lua_State* LuaParser::_lua=nullptr;
@@ -38,7 +40,7 @@ const reg_lua_function_t LuaParser::reg_tabe[]={
 };
 LuaParser::LuaParser(){
 	if(!LuaParserInit()){
-		DDBUG("Lua Parser creat err");
+		DDBUG("Lua Parser creat err.");
 	}
 }
 
@@ -61,35 +63,13 @@ bool LuaParser::LuaParserInit(){
 	//creat a new lua 
 	_lua=luaL_newstate();
 	if(_lua==nullptr){
-		DERR("Creat lua state err");
+		DERR("Creat lua state err.");
 		return false;
 	}
 	// open the lua stand lib	
 	luaL_openlibs(_lua);
 	
 	//register the lua script function
-	/*lua_register(_lua,"LuaTakeoff",&LuaInterface::LuaTakeoff);
-	lua_register(_lua,"Lualand",&LuaInterface::Lualand);
-	lua_register(_lua,"LuaFlyByGPS",&LuaInterface::LuaFlyByGPS);
-	lua_register(_lua,"LuaFlyByVelocity",&LuaInterface::LuaFlyByVelocity);
-	lua_register(_lua,"LuaFlyByBearingAndDistance",&LuaInterface::LuaFlyByBearingAndDistance);
-	lua_register(_lua,"LuaTurnHead",&LuaInterface::LuaTurnHead);
-	lua_register(_lua,"LuaClimbTo",&LuaInterface::LuaClimbTo);
-	lua_register(_lua,"LuaClimbBy",&LuaInterface::LuaClimbBy);
-	lua_register(_lua,"LuaGoHome",&LuaInterface::LuaGoHome);
-	lua_register(_lua,"LuaDelay",&LuaInterface::LuaDelay);
-	lua_register(_lua,"LuaGetLocationGPS",&LuaInterface::LuaGetLocationGPS);
-	lua_register(_lua,"LuaGetHead",&LuaInterface::LuaGetHead);
-	lua_register(_lua,"LuaGetAlt",&LuaInterface::LuaGetAlt);
-	lua_register(_lua,"LuaCall",&LuaInterface::LuaCall);
-	lua_register(_lua,"LuaShootPhoto",&LuaInterface::LuaShootPhoto);
-	lua_register(_lua,"LuaVideoStart",&LuaInterface::LuaVideoStart);
-	lua_register(_lua,"LuaVideoStop",&LuaInterface::LuaVideoStop);
-	lua_register(_lua,"LuaCameraZoom",&LuaInterface::LuaCameraZoom);
-	lua_register(_lua,"LuaSetGimbalAngle",&LuaInterface::LuaSetGimbalAngle);
-	lua_register(_lua,"LuaGetGimbalAngle",&LuaInterface::LuaGetGimbalAngle);
-	lua_register(_lua,"LuaTestMotor",&LuaInterface::LuaTestMotor);*/
-	
 	for(int i=0; i< (sizeof(reg_tabe)/sizeof(reg_tabe[0]));  i++){
 		lua_register(_lua,reg_tabe[i]._name,reg_tabe[i]._func);
 	}
@@ -100,7 +80,7 @@ bool LuaParser::LuaParserInit(){
 *open the lua script and run in another thread
 *param: lua file name path
 */
-bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool need_new_thread){
+bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,int pint_fd,bool need_new_thread){
 	//check 1: lua file path valid
 	if(lua_file_name_path.empty()){
 		DWAR("Lua script path is empty.");
@@ -144,6 +124,9 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool n
 #endif
 		FLIGHTLOG("Creat a New thread for lua script run...");
 		_lua_script_thread_running=true;
+		//set lua print fd handler to std::cout or socket fd
+		luaSocketPrintFd=pint_fd;
+		//new a heap for lua thread
 		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this);
 		
 	}else{
@@ -170,6 +153,8 @@ LuaParser::LuaParserRunThread(){
 		}
 #endif
 	}
+	//run finished  output the logo 
+	LOGO(luaSocketPrintFd,AutoDjiLogo);
 }
 
 void 

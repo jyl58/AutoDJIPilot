@@ -10,6 +10,8 @@
 #include <fstream>
 #include <sstream>
 #include "Commander.h"
+//app logo
+const std::string AutoDjiLogo="DJI_Auto>";
 
 bool main_thread_need_exit=false;
 /*
@@ -19,31 +21,26 @@ int main(int argc, char** argv){
 	Commander::AutopilotSystemInit(argv[1]);
 	
 	std::string input;	
-	std::ostringstream outMsg(std::ios::app);
-	std::cout<<"DJI_Auto>";
+	std::cout<<AutoDjiLogo;
 	while(!Commander::main_thread_need_exit){
 		//clear input		
 		input.clear();
 		//get string  form stand input
 		getline(std::cin,input); // read a line input include space
 		if(input.empty()){
-			std::cout<<"DJI_Auto>";	
+			std::cout<<AutoDjiLogo;	
 			usleep(100000);//100ms
 			continue;
 		}
 		//split cmd and param
 		if(!Commander::splitCMDAndParam(input)){
 			std::cout<<"Input command format err."<<std::endl;	
-			std::cout<<"DJI_Auto>";
+			std::cout<<AutoDjiLogo;
 			continue;	
 		}
-		//clear	old message  buffer
-		outMsg.str("");
 		// run cmd
-		Commander::RunCommand(outMsg);
-		//print message to terminal
-		std::cout<<outMsg.str()<<std::endl;
-		std::cout<<"DJI_Auto>";
+		Commander::RunCommand();
+		std::cout<<AutoDjiLogo;
 	}
 	//exit app
 	Commander::AutopilotSystemExit();

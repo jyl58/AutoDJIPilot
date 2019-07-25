@@ -30,6 +30,7 @@ inc/
 inc/linux/
 inc/utilize/
 inc/dev/
+../lib/
 ../lib/c_library_v2/
 ../lib/c_library_v2/ardupilotmega/
 ../lib/c_library_v2/common/

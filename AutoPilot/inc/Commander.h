@@ -29,7 +29,7 @@
 #include "geo.h"
 
 #define DEFAULT_BIN_DIRECTORY "/AutoDJIPilot/APP/bin/"
-typedef void (*cmdfunction)(std::ostringstream&);
+typedef void (*cmdfunction)(int);
 typedef struct CMDFUNCTION{
 	char cmd_name[10];
 	cmdfunction cmd_function;
@@ -42,24 +42,24 @@ public:
 	static void AutopilotSystemInit(const std::string& config_file_path);
 	static void AutopilotSystemExit();
 	static bool splitCMDAndParam(const std::string& input_stream);
-	static void RunCommand(std::ostringstream& outMsg);
+	static void RunCommand(int print_fd=-1);
 	static bool main_thread_need_exit;
 	static bool tcp_link_need_disconnect;
 
 private:
-	static void HelpCommandCMD(std::ostringstream& outMsg);
-	static void ZoomCamera(std::ostringstream& outMsg);
-	static void	LoadPayloadPlugin(std::ostringstream& outMsg);
-	static void RunLuaScript(std::ostringstream& outMsg);
-	static void PauseRunLuaScript(std::ostringstream& outMsg);
-	static void GoOnRunLuaScript(std::ostringstream& outMsg);
-	static void BreakRunLuaScript(std::ostringstream& outMsg);
-	static void SetGimbal(std::ostringstream& outMsg);
-	static void RunVideo(std::ostringstream& outMsg);
-	static void ShootPhoto(std::ostringstream& outMsg);
-	static void PrintConfigMsgCMD(std::ostringstream& outMsg);
-	static void PrintFlightStatusCMD(std::ostringstream& outMsg);
-	static void ExitSystemCMD(std::ostringstream& outMsg);
+	static void HelpCommandCMD(int print_fd=-1);
+	static void ZoomCamera(int print_fd=-1);
+	static void	LoadPayloadPlugin(int print_fd=-1);
+	static void RunLuaScript(int print_fd=-1);
+	static void PauseRunLuaScript(int print_fd=-1);
+	static void GoOnRunLuaScript(int print_fd=-1);
+	static void BreakRunLuaScript(int print_fd=-1);
+	static void SetGimbal(int print_fd=-1);
+	static void RunVideo(int print_fd=-1);
+	static void ShootPhoto(int print_fd=-1);
+	static void PrintConfigMsgCMD(int print_fd=-1);
+	static void PrintFlightStatusCMD(int print_fd=-1);
+	static void ExitSystemCMD(int print_fd=-1);
 	
 	static ConsoleServer* _console_server;	
 	static LinuxSetup* _linux_setup;
