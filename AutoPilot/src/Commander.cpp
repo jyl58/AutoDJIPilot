@@ -220,7 +220,7 @@ Commander::PrintFlightStatusCMD(int print_fd){
 	
 	NOTICE_MSG(print_fd,"GPS Message:    "+ std::to_string(gps_details.hdop)+"(hdop), "+
 											std::to_string(gps_details.hacc)+"(hps), "+
-											std::to_string(gps_details.fix) +"(fix), "+
+											std::to_string((int)gps_details.fix) +"(fix), "+
 											std::to_string(gps_details.usedGPS)+"(number), "+
 											std::to_string(gps_signal_level)+"(sig(0~5))");
 											
@@ -263,7 +263,7 @@ Commander::ZoomCamera(int print_fd){
 void 
 Commander::LoadPayloadPlugin(int print_fd){
 	if(_cmd_and_param.at(1).empty()){
-		DWAR("Load CMD need a param for dynamic lib path.");
+		DWAR("Load CMD need a param for dynamic lib path.",print_fd);
 		return;
 	}
 	//close if there is a plugin
@@ -273,7 +273,7 @@ Commander::LoadPayloadPlugin(int print_fd){
 	// open the user payload control plugin .so  
 	dynamic_lib_handler=dlopen(_cmd_and_param.at(1).c_str(),RTLD_NOW);
 	if(!dynamic_lib_handler){
-		DWAR("Load "+_cmd_and_param.at(1)+" dynamic lib err!");
+		DWAR("Load "+_cmd_and_param.at(1)+" dynamic lib err!",print_fd);
 	}
 	// function handler
 	typedef PayloadBase* (*payload_creat)(void);
@@ -285,7 +285,7 @@ Commander::LoadPayloadPlugin(int print_fd){
 	_payload_base=_creat_func();
 	
 	if(!_payload_base->init()){
-		DWAR("Init Payload control dynamic lib err!");
+		DWAR("Init Payload control dynamic lib err!",print_fd);
 	}
 }
 void 

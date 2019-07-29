@@ -22,18 +22,23 @@
 		FLIGHTLOG(msg);										\
 	}														\
 
-#define DWAR(msg) 											\
-	{														\
-		if (AUTO_DBUG) std::cout<<"[WAR]"<<MESSAGEFORMATE<<msg<<std::endl;	\
-		FlightLog::writeLogBufferWithLabel(msg);			\
-															\
-	}
+
 #define DDBUG(msg) 											\
-	if(AUTO_DBUG)	{std::cout<<"[DBUG]"<<msg<<std::endl; }\
+	if(AUTO_DBUG)	{std::cout<<"[DBUG]"<<msg<<std::endl; }	\
 
 // log 
 #define FLIGHTLOG(msg) FlightLog::writeLogBuffer(msg)
 
+//warning message 
+inline void DWAR(std::string msg,int fd = -1){														
+	std::string warn_message="[WAR]"+msg;
+	if(fd == -1){
+		std::cout<<"[WAR]"<<MESSAGEFORMATE<<msg<<std::endl;	
+	}else{
+		send(fd,warn_message.c_str(),warn_message.size(),0);	
+	}
+	FLIGHTLOG(warn_message);																
+}
 //notice 
 inline void NOTICE_MSG(int fd,std::string msg){
 	if(fd == -1){							

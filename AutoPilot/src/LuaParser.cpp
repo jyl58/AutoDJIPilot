@@ -81,20 +81,22 @@ bool LuaParser::LuaParserInit(){
 *param: lua file name path
 */
 bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,int pint_fd,bool need_new_thread){
+	//set lua print fd handler to std::cout or socket fd
+	luaSocketPrintFd=pint_fd;
 	//check 1: lua file path valid
 	if(lua_file_name_path.empty()){
-		DWAR("Lua script path is empty.");
+		DWAR("Lua script path is empty.",pint_fd);
 		return false;
 	}
 	// check 2: if there is a thread running  
 	if(_lua_script_thread_running){
-		DWAR("A lua script thread is running,please waiting or break it.");
+		DWAR("A lua script thread is running,please waiting or break it.",luaSocketPrintFd);
 		return false;
 	}
 	//check 3: the lua parser healthy
 	int err_code=lua_status(_lua);		
 	if( err_code != LUA_OK){
-		DWAR("Lua status is not OK,err code: "+std::to_string(err_code));
+		DWAR("Lua status is not OK,err code: "+std::to_string(err_code),luaSocketPrintFd);
 		return false;
 	}
 	// clear the all interrupt hook before run the lua script
@@ -102,7 +104,7 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,int pi
 	//load lua script frome file
 	err_code=luaL_loadfile(_lua,lua_file_name_path.c_str());
 	if ( err_code != LUA_OK){
-		DWAR("Loading lua script file err,err code: "+ std::to_string(err_code));
+		DWAR("Loading lua script file err,err code: "+ std::to_string(err_code),luaSocketPrintFd);
 		return false;
 	}
 	if(need_new_thread){
@@ -118,14 +120,12 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,int pi
 		FlightCore::djiNeedBreakAutoControl(false);
 		// get flight core ctr authority
 		if(!FlightCore::djiGetControlAuthority()){
-			DWAR("Lua thread get ctr authority err.");	
+			DWAR("Lua thread get ctr authority err.",luaSocketPrintFd);	
 			return false;
 		}
 #endif
 		FLIGHTLOG("Creat a New thread for lua script run...");
 		_lua_script_thread_running=true;
-		//set lua print fd handler to std::cout or socket fd
-		luaSocketPrintFd=pint_fd;
 		//new a heap for lua thread
 		_lua_script_run_thread = new std::thread(&LuaParser::LuaParserRunThread,this);
 		
@@ -139,7 +139,7 @@ LuaParser::LuaParserRunThread(){
 	FLIGHTLOG("The Lua script start Running... ");
 	int err_code=lua_pcall(_lua,0,0,0);
 	if(err_code != LUA_OK){
-		DWAR("Run lua script err,err code: "+ std::to_string(err_code));
+		DWAR("Run lua script err,err code: "+ std::to_string(err_code),luaSocketPrintFd);
 	}else{
 		FLIGHTLOG("The lua script run Complete.");
 	}
@@ -149,7 +149,7 @@ LuaParser::LuaParserRunThread(){
 #ifdef OFFLINE_DEBUG
 #else
 		if(!FlightCore::djiReleaseControlAuthority()){
-			DWAR("Lua thread release ctr authority err.");
+			DWAR("Lua thread release ctr authority err.",luaSocketPrintFd);
 		}
 #endif
 	}
@@ -160,7 +160,7 @@ LuaParser::LuaParserRunThread(){
 void 
 LuaParser::LuaInterruptRuning(const std::string& reason){
 	if(_lua_script_thread_running){
-		DWAR("Break lua script : "+reason);
+		DWAR("Break lua script : "+reason,luaSocketPrintFd);
 		// set lua debug hook for stop
 		lua_sethook(_lua,&LuaInterface::LuaStop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
 		// break while loop in the flight core class 
