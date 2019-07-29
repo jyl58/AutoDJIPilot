@@ -9,6 +9,7 @@
 #include <sstream>
 #include <dlfcn.h>
 #include "Commander.h"
+#include "EventManage.h"
 
 ConsoleServer* Commander::_console_server=nullptr;	
 LinuxSetup* Commander::_linux_setup=nullptr;
@@ -84,12 +85,12 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		exit(1);
 	}
 	LuaInterface::_flight_core =_flight_core;
-	MavlinkRouter::_flight_core=_flight_core;
-	// int flight mavlink router thread	
-	/*if (!MavlinkRouter::MavlinkRouterInit(_linux_setup->getMAVlinkDevPort()->c_str())){
-		exit(1);	
-	}*/
+	//MavlinkRouter::_flight_core=_flight_core;
 #endif
+    // int flight mavlink router thread	
+	if (!MavlinkRouter::MavlinkRouterInit(_linux_setup->getMAVlinkDevPort().c_str(),_linux_setup->getMAVlinkDevPortBaudrate())){
+		exit(1);	
+	}
 	//creat a consoler server for remote cmd 
 	_console_server=new ConsoleServer();
 	if(_console_server == nullptr){
@@ -98,6 +99,10 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	}
 	if(!_console_server->ConsoleServerInit()){
 		DERR("Flight Console Server init err!");
+		exit(1);
+	}
+	if(!EventManage::EventManageInit()){
+		DERR("Event Manage init err!");
 		exit(1);
 	}
 	_env_home=getenv("HOME");
@@ -118,6 +123,11 @@ Commander::AutopilotSystemExit(){
 		_linux_setup= nullptr;
 	}
 	MavlinkRouter::stopMAVlinkThread();
+	
+	if( _console_server!= nullptr){
+		delete _console_server;
+		_console_server=nullptr;
+	}
 	FlightLog::FlightLogStop();
 	//close the dynamic lib
 	if(dynamic_lib_handler != nullptr)

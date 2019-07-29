@@ -58,6 +58,7 @@ src/FlightLog.cpp
 src/MavlinkRouter.cpp
 src/PayloadBase.cpp
 src/ConsoleServer.cpp
+src/utilize/EventManage.cpp
 src/Commander.cpp
 src/Main.cpp
 )

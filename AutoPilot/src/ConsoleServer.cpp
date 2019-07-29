@@ -14,30 +14,23 @@
 #include <netinet/in.h>
 #include "ConsoleServer.h"
 #include "Commander.h"
+#include "EventManage.h"
 
 ev_io ConsoleServer::_tcp_listen;
 struct ev_loop* ConsoleServer::_ev_loop=ev_default_loop(0);
-std::thread* ConsoleServer::_console_server_thread=nullptr;
 int ConsoleServer::_socket_fd;
-//const std::string ConsoleServer::console_server_logo="DJI_Auto>";
 std::vector<socket_connect_t*> ConsoleServer::_connect_list;
-ConsoleServer::ConsoleServer(){
-
-}
 
 ConsoleServer::~ConsoleServer(){
-	if(_console_server_thread!=nullptr){
-		//STOP LIBEV
-		ev_break(_ev_loop,EVBREAK_ALL);
-		_console_server_thread->join();
-		delete _console_server_thread;
-		_console_server_thread=nullptr;
-	}
-	//delete _io_list memery
+	//close tcp link fd and stop io and delete _io_list memery 
 	for (int i =0;i<_connect_list.size();i++){
+		// close tcp link
+		close(_connect_list[i]->_tcp_talk.fd);
+		ev_io_stop(_ev_loop,&_connect_list[i]->_tcp_talk);
 		delete _connect_list[i];
 	}
 	_connect_list.clear();
+	ev_io_stop(_ev_loop,&_tcp_listen);
 }
 bool 
 ConsoleServer::ConsoleServerInit(){
@@ -98,22 +91,10 @@ ConsoleServer::ConsoleServerInit(){
 		return false;
 	}
 	FLIGHTLOG("Socket is listenning.");
-	FLIGHTLOG("creat a console server thread.");
-	//creat a new thread
-	if(_console_server_thread != nullptr){
-		_console_server_thread->join();
-		delete _console_server_thread;
-		_console_server_thread=nullptr;
-	}
-	_console_server_thread=new std::thread(&ConsoleServer::ConsoleServerListenThread);
-	return true;
-}
-void 
-ConsoleServer::ConsoleServerListenThread(){
-	//init a listen poll event 
+	//set the socket io event 
 	ev_io_init(&_tcp_listen,ConsoleServer::tCPAcceptCallback,_socket_fd,EV_READ);
 	ev_io_start(_ev_loop,&_tcp_listen);
-	ev_run(_ev_loop);
+	return true;
 }
 void 
 ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int events){

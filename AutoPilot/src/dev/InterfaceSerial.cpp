@@ -14,7 +14,7 @@ InterfaceSerial::InterfaceSerial(const char* portname, int speed)
 {
     _fd = ::open(portname, (O_RDWR | O_NOCTTY | O_SYNC));
 	if (_fd < 0){
-		DERR("ubable open the port ");
+		DERR("ubable open the port.");
 		return;
     }
     SetupSerial(_fd, speed, 8, 1, 'N');
