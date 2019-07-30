@@ -62,8 +62,10 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	}
 	// creat a lua parser.
 	_lua_parser		=new LuaParser();
-	if(_lua_parser == nullptr)
+	if(_lua_parser == nullptr){
+		DERR("Creat lua parser err!");
 		exit(1);
+	}
 	//creat a liux enviroment init instance.
 	_linux_setup	=new LinuxSetup(_lua_parser,config_file_path);
 	if(_linux_setup == nullptr)
@@ -71,7 +73,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 #ifdef OFFLINE_DEBUG
 #else		
 	if(!_linux_setup->initVehicle()){
-		DERR("Init vehicle err!");
+		DERR("Connect to vehicle err!");
 		exit(1);
 	}
 	
@@ -89,6 +91,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 #endif
     // int flight mavlink router thread	
 	if (!MavlinkRouter::MavlinkRouterInit(_linux_setup->getMAVlinkDevPort().c_str(),_linux_setup->getMAVlinkDevPortBaudrate())){
+		DERR("Mavlink router init err!");
 		exit(1);	
 	}
 	//creat a consoler server for remote cmd 
@@ -110,24 +113,31 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 void 
 Commander::AutopilotSystemExit(){
 	// the order of decontructor is important
+	//exit the lua parser thread
 	if (_lua_parser != nullptr ){
 		delete _lua_parser;
 		_lua_parser=nullptr;
 	}
+	//exit flight core thread
 	if(_flight_core != nullptr){
 		delete _flight_core;
 		_flight_core= nullptr;
 	}
+	//delete the setup instance
 	if(_linux_setup != nullptr) {
 		delete _linux_setup;
 		_linux_setup= nullptr;
 	}
+	//exit the mavlink router thread
 	MavlinkRouter::stopMAVlinkThread();
-	
+	//stop the console sever event loop
 	if( _console_server!= nullptr){
 		delete _console_server;
 		_console_server=nullptr;
 	}
+	//exit the event manage thread
+	EventManage::EventManageExit();
+	//last: exit the log thread
 	FlightLog::FlightLogStop();
 	//close the dynamic lib
 	if(dynamic_lib_handler != nullptr)

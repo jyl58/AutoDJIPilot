@@ -8,7 +8,6 @@ public:
 	~EventManage();
 	static bool EventManageInit();
 	static void EventManageExit();
-	static struct ev_loop* GetEvLoopHandler(){return _ev_loop;}
 private:
 	static void EventManageThread();
 	/*ev*/

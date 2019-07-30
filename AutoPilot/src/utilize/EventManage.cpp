@@ -22,6 +22,7 @@ void EventManage::EventManageThread(){
 void EventManage::EventManageExit(){
 	if(_event_manage_thread != nullptr){
 		ev_break(_ev_loop,EVBREAK_ALL);
+		_event_manage_thread->join();
 		delete _event_manage_thread;
 		_event_manage_thread=nullptr;
 	}
