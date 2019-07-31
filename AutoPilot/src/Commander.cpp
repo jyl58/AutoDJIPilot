@@ -67,8 +67,10 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	}
 	//creat a liux enviroment init instance.
 	_linux_setup	=new LinuxSetup(_lua_parser,config_file_path);
-	if(_linux_setup == nullptr)
+	if(_linux_setup == nullptr){
+		DERR("Creat linux setup instance err!");
 		exit(1);
+	}
 #ifdef OFFLINE_DEBUG
 #else		
 	int try_count=0;
