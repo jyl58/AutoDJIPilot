@@ -59,10 +59,10 @@ function flyToTargetPoint(target_x,target_y,target_z)
 	end
 end
 
-home_path=os.getenv("HOME");
-package.path=home_path.."/AutoDJIPilot/APP/common/tools.lua";
+
+package.path="/usr/local/share/AutoDjiPilot/lib/tools.lua";
 require "tools"
-package.path=home_path.."/AutoDJIPilot/APP/common/GEO.lua";
+package.path=home_path.."/usr/local/share/AutoDjiPilot/lib/GEO.lua";
 require "GEO"
 
 CHECK_FLY_MAX_SPEED=2.0;
