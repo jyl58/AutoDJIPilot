@@ -45,7 +45,7 @@ FlightCore::djiGetControlAuthority(){
 	int functionTimeout=1;
 	char func[50];
 	if(_vehicle == nullptr){
-		DWAR("Vehicle pointer is nullptr.");	
+		DWAR(__FILE__,__LINE__,"Vehicle pointer is nullptr.");	
 		return false;
 	}
 	//get control authority //try 3 times for roubust
@@ -62,7 +62,7 @@ FlightCore::djiGetControlAuthority(){
 	}
 	if(try_times>=3){
 		std::string errmsg(func);
-		DWAR("Get control authority err: "+errmsg);	
+		DWAR(__FILE__,__LINE__,"Get control authority err: "+errmsg);	
 		return false;
 	}
 	return true;
@@ -72,7 +72,7 @@ FlightCore::djiReleaseControlAuthority(){
 	int functionTimeout=1;
 	char func[50];
 	if(_vehicle == nullptr){
-		DWAR("Vehicle pointer is nullptr.");	
+		DWAR(__FILE__,__LINE__,"Vehicle pointer is nullptr.");	
 		return false;
 	}
 	//Release control authority//try 3 times for roubust
@@ -89,7 +89,7 @@ FlightCore::djiReleaseControlAuthority(){
 	}
 	if(try_times>=3){
 		std::string errmsg(func);
-		DWAR("Release control authority err: "+errmsg);	
+		DWAR(__FILE__,__LINE__,"Release control authority err: "+errmsg);	
 		return false;
 	}
 	return true;
@@ -117,7 +117,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	if (ACK::getError(subcribeStatus) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(subcribeStatus,func);
 		std::string errmsg(func);
-		DWAR("Subscribe Verify err: "+errmsg);
+		DWAR(__FILE__,__LINE__,"Subscribe Verify err: "+errmsg);
 		return false;
 	}
 	// package 0: Subscribe to flight status, display mode ,battery info at 10 hz
@@ -128,7 +128,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	bool enableTimestamp	=false;
 	bool pkgStatus			=_vehicle->subscribe->initPackageFromTopicList(pkgIndex,numTopic,topicList5Hz,enableTimestamp,freq);
 	if(!pkgStatus){
-		DWAR("Init pkgindex 0 err.");
+		DWAR(__FILE__,__LINE__,"Init pkgindex 0 err.");
 		return pkgStatus;
 	}
 	subcribeStatus			=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
@@ -136,7 +136,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 		ACK::getErrorCodeMessage(subcribeStatus,func);
 		_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
 		std::string errmsg(func);
-		DWAR("Subscribe Start Package 0 err: "+errmsg);	
+		DWAR(__FILE__,__LINE__,"Subscribe Start Package 0 err: "+errmsg);	
 		return false;
 	}
 	//package 1: lat/lon/alt and Velocity at 10 hz
@@ -147,7 +147,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	enableTimestamp			=false;
 	pkgStatus				=_vehicle->subscribe->initPackageFromTopicList(pkgIndex,numTopic,topicList10Hz,enableTimestamp,freq);
 	if(!pkgStatus){
-		DWAR("Init pkgindex 1 err.");
+		DWAR(__FILE__,__LINE__,"Init pkgindex 1 err.");
 		return pkgStatus;
 	}
 	subcribeStatus			=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
@@ -155,7 +155,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 		ACK::getErrorCodeMessage(subcribeStatus, func);
 		_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
 		std::string errmsg(func);
-		DWAR("Subscribe Start Package 1 err: "+errmsg);	
+		DWAR(__FILE__,__LINE__,"Subscribe Start Package 1 err: "+errmsg);	
 		return false;
 	}
 	/*register a callback for global pos mavlink route msg*/
@@ -169,7 +169,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	enableTimestamp			=false;
 	pkgStatus				=_vehicle->subscribe->initPackageFromTopicList(pkgIndex,numTopic,topicList20Hz,enableTimestamp,freq);
 	if(!pkgStatus){
-		DWAR("Init pkgindex 2 err.");
+		DWAR(__FILE__,__LINE__,"Init pkgindex 2 err.");
 		return pkgStatus;
 	}
 	subcribeStatus			=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
@@ -177,7 +177,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 		ACK::getErrorCodeMessage(subcribeStatus, func);
 		_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
 		std::string errmsg(func);
-		DWAR("Subscribe Start Package 2 err: "+errmsg);	
+		DWAR(__FILE__,__LINE__,"Subscribe Start Package 2 err: "+errmsg);	
 		return false;
 	}
 	_vehicle->subscribe->registerUserPackageUnpackCallback(2,RCCallback);
@@ -190,7 +190,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	enableTimestamp				=false;
 	pkgStatus					=_vehicle->subscribe->initPackageFromTopicList(pkgIndex,numTopic,topicList200Hz,enableTimestamp,freq);
 	if(!pkgStatus){
-		DWAR("Init pkgindex 3 err.");
+		DWAR(__FILE__,__LINE__,"Init pkgindex 3 err.");
 		return pkgStatus;
 	}
 	subcribeStatus				=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
@@ -198,7 +198,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 		ACK::getErrorCodeMessage(subcribeStatus, func);
 		_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
 		std::string errmsg(func);
-		DWAR("Subscribe Start Package 3 err: "+errmsg);	
+		DWAR(__FILE__,__LINE__,"Subscribe Start Package 3 err: "+errmsg);	
 		return false;
 	}
 	
@@ -210,12 +210,12 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	enableTimestamp				=false;
 	pkgStatus					=_vehicle->subscribe->initPackageFromTopicList(pkgIndex,numTopic,topicListRTK5Hz,enableTimestamp,freq);
 	if(!pkgStatus){
-		DWAR("Init pkgindex 4 err.");
+		DWAR(__FILE__,__LINE__,"Init pkgindex 4 err.");
 		return pkgStatus;
 	}
 	subcribeStatus				=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
 	if(subcribeStatus.data == ErrorCode::SubscribeACK::SOURCE_DEVICE_OFFLINE){
-		DWAR("RTK Not Available");
+		DWAR(__FILE__,__LINE__,"RTK Not Available");
 		_vehicle_rtk_avilable=false;
 	}else {
 		_vehicle_rtk_avilable=true;
@@ -223,7 +223,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 			ACK::getErrorCodeMessage(subcribeStatus,func);
 			_vehicle->subscribe->removePackage(pkgIndex,responseTimeout);
 			std::string errmsg(func);
-			DWAR("Subscribe Start Package 4 err: "+errmsg);	
+			DWAR(__FILE__,__LINE__,"Subscribe Start Package 4 err: "+errmsg);	
 			return false;
 		}
 	}
@@ -351,11 +351,11 @@ FlightCore::getVehicleBearing(){
 bool 
 FlightCore::djiTakeoff(){
 	if(_flightStatus == VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Running takeoff, but the vehicle is in air already");
+		DWAR(__FILE__,__LINE__,"Running takeoff, but the vehicle is in air already");
 		return true;
 	}
 	if(_gps_signal_level<3){
-		DWAR("Takeoff need GPS signal level >=3.");		
+		DWAR(__FILE__,__LINE__,"Takeoff need GPS signal level >=3.");		
 		return false;
 	}
 
@@ -366,7 +366,7 @@ FlightCore::djiTakeoff(){
 	if(ACK::getError(takeoffstatus) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(takeoffstatus,func);
 		std::string errmsg(func);
-		DWAR("Send takeoff CMD err:"+errmsg);		
+		DWAR(__FILE__,__LINE__,"Send takeoff CMD err:"+errmsg);		
 		return false;
 	}
 	/*First check: motor is start*/
@@ -379,7 +379,7 @@ FlightCore::djiTakeoff(){
 			usleep(100000); //waiting 30*100ms=3s
 		}
 		if(cmdstart == 20){
-			DWAR("Takeoff filed, Motors are not spining");		
+			DWAR(__FILE__,__LINE__,"Takeoff filed, Motors are not spining");		
 			return false;
 		}
 	}else{
@@ -397,7 +397,7 @@ FlightCore::djiTakeoff(){
 			usleep(100000);
 		}
 		if(onground_count == 100){
-			DWAR("Takeoff filed, Vehicle is still on the ground,but motors is spin ");		
+			DWAR(__FILE__,__LINE__,"Takeoff filed, Vehicle is still on the ground,but motors is spin ");		
 			return false;
 		}
 	}else{
@@ -414,7 +414,7 @@ FlightCore::djiTakeoff(){
 		   _display_mode != VehicleStatus::DisplayMode::MODE_ATTITUDE){
 			//std::cout<<"Takeoff successful"<<"\n"<<std::endl;
 		}else{
-			DWAR("Takeoff finished,but the vehicle is in an unexpected mode");
+			DWAR(__FILE__,__LINE__,"Takeoff finished,but the vehicle is in an unexpected mode");
 			return false;			
 		}
 	}else{
@@ -424,7 +424,7 @@ FlightCore::djiTakeoff(){
 }
 bool FlightCore::djiLanding(){
 	if(_flightStatus == VehicleStatus::FlightStatus::ON_GROUND){
-		DWAR("Running landing ,but the the vehicle is on ground already");	
+		DWAR(__FILE__,__LINE__,"Running landing ,but the the vehicle is on ground already");	
 		return true;
 	}
 	int timeout=1;
@@ -433,7 +433,7 @@ bool FlightCore::djiLanding(){
 	if(ACK::getError(landingStatus) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(landingStatus,func);
 		std::string errmsg(func);
-		DWAR("Send landing CMD err:"+errmsg);		
+		DWAR(__FILE__,__LINE__,"Send landing CMD err:"+errmsg);		
 		return false;	
 	}
 	//first check landing stared
@@ -463,7 +463,7 @@ bool FlightCore::djiLanding(){
 }
 bool FlightCore::djiGoHome(){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Running go home, but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Running go home, but the vehicle is not in air.");	
 		return false;
 	}
 	int timeout=1;
@@ -472,7 +472,7 @@ bool FlightCore::djiGoHome(){
 	if(ACK::getError(goHomeStatus) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(goHomeStatus,func);
 		std::string errmsg(func);
-		DWAR("send go home CMD err:"+errmsg);
+		DWAR(__FILE__,__LINE__,"send go home CMD err:"+errmsg);
 		return false;
 	}
 	//first check: start go home
@@ -502,7 +502,7 @@ bool FlightCore::djiGoHome(){
 */
 bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in_m){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Running move by z offset,but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Running move by z offset,but the vehicle is not in air.");	
 		return false;
 	}
 	TypeMap<TOPIC_HEIGHT_FUSION>::type 	task_startAltitude=_height_fusioned;
@@ -533,7 +533,7 @@ bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in
 }
 bool FlightCore::djiMoveZToTarget(float target_alt_m){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Running move to z target, but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Running move to z target, but the vehicle is not in air.");	
 		return false;
 	}
 	return djiMoveZByOffset(target_alt_m-_height_fusioned);
@@ -545,7 +545,7 @@ bool FlightCore::djiMoveZToTarget(float target_alt_m){
 */
 bool FlightCore::djiMoveByGPS(double target_lat_deg,double target_lon_deg){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Running move by gps,but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Running move by gps,but the vehicle is not in air.");	
 		return false;
 	}
 	float x_offset=0;
@@ -562,7 +562,7 @@ bool FlightCore::djiMoveByGPS(double target_lat_deg,double target_lon_deg){
 */
 bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float pos_threshold_in_m){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Runing move by x_y offset,but vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Runing move by x_y offset,but vehicle is not in air.");	
 		return false;
 	}
 	//record the start point
@@ -629,7 +629,7 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 bool	
 FlightCore::djiMoveByBearingAndDistance(float bearing,float distance){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Run reletive fly, but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Run reletive fly, but the vehicle is not in air.");	
 		return false;
 	}
 	double lat;
@@ -643,7 +643,7 @@ FlightCore::djiMoveByBearingAndDistance(float bearing,float distance){
 */
 bool  FlightCore::djiMoveByVelocity(float vx,float vy,float vz){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Run velocity fly ,but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Run velocity fly ,but the vehicle is not in air.");	
 		return false;
 	}
 	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
@@ -658,7 +658,7 @@ bool  FlightCore::djiMoveByVelocity(float vx,float vy,float vz){
 */
 bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Run turn head,but  the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Run turn head,but  the vehicle is not in air.");	
 		return false;
 	}
 	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
@@ -697,7 +697,7 @@ bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desired ,float z_offset_Desired, float yaw_Desired,float pos_threshold_in_m,float yaw_threshold_in_deg){
 	
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR("Run the move by pos offset,but vehicle is not in air");	
+		DWAR(__FILE__,__LINE__,"Run the move by pos offset,but vehicle is not in air");	
 		return false;
 	}
 	Telemetry::Vector3f localoffset;
@@ -780,7 +780,7 @@ bool FlightCore::djiArmMotor(){
 	if(ACK::getError(cmd_status) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(cmd_status,func);
 		std::string errmsg(func);
-		DWAR("Send arm motor cmd err:"+errmsg);	
+		DWAR(__FILE__,__LINE__,"Send arm motor cmd err:"+errmsg);	
 		return false;
 	}
 	return true;
@@ -791,7 +791,7 @@ bool FlightCore::djiDisarmMotor(){
 	if(ACK::getError(cmd_status) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(cmd_status,func);
 		std::string errmsg(func);
-		DWAR("Send disarm motor cmd err:"+errmsg);	
+		DWAR(__FILE__,__LINE__,"Send disarm motor cmd err:"+errmsg);	
 		return false;
 	}
 	return true;
@@ -799,7 +799,7 @@ bool FlightCore::djiDisarmMotor(){
 bool
 FlightCore::djiShootPhoto(){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR("Camera not mount.");		
+		DWAR(__FILE__,__LINE__,"Camera not mount.");		
 		return false;
 	}		
 	_vehicle->camera->shootPhoto();
@@ -809,7 +809,7 @@ FlightCore::djiShootPhoto(){
 bool 
 FlightCore::djiVideoStart(){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR("Camera not mount.");		
+		DWAR(__FILE__,__LINE__,"Camera not mount.");		
 		return false;
 	}	
 	_vehicle->camera->videoStart();
@@ -819,7 +819,7 @@ FlightCore::djiVideoStart(){
 bool 
 FlightCore::djiVideoStop(){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR("Camera not mount.");		
+		DWAR(__FILE__,__LINE__,"Camera not mount.");		
 		return false;
 	}
 	_vehicle->camera->videoStop();
@@ -846,7 +846,7 @@ FlightCore::djiCameraZoomBystep(int16_t times){
 bool	
 FlightCore::djiCameraZoom(uint16_t mode, int16_t value){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR("Camera not mount.");
+		DWAR(__FILE__,__LINE__,"Camera not mount.");
 		return false;
 	}
 	camera_zoom_data_type_t zoom_data;
@@ -864,7 +864,7 @@ FlightCore::djiCameraZoom(uint16_t mode, int16_t value){
 		zoom_data.optical_zoom_param.cont_param.zoom_cont_speed = (uint16_t)abs(value);
 		zoom_data.optical_zoom_param.cont_param.zoom_cont_direction = value>0? 1: 0;
 	}else{
-		DWAR("Zoom mode err.");
+		DWAR(__FILE__,__LINE__,"Zoom mode err.");
 		return false;	
 	}
 	djiCameraZoom(&zoom_data);
@@ -880,7 +880,7 @@ FlightCore::djiCameraZoom(const camera_zoom_data_type_t *zoom){
 bool
 FlightCore::djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR("Gimbal not mount.");
+		DWAR(__FILE__,__LINE__,"Gimbal not mount.");
 		return false;
 	}
 	
@@ -911,14 +911,14 @@ FlightCore::djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg){
 		sleep(1);// waiting 5*1=5s for gimbal reache the target angle
 	}
 	if(startcount==5){
-		DWAR("gimbal control Timeout.");		
+		DWAR(__FILE__,__LINE__,"gimbal control Timeout.");		
 	}
 	return true;
 }
 bool	
 FlightCore::djiSetGImbalSpeed(float roll_rate,float pitch_rate,float yaw_rate){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR("Gimbal not mount.");		
+		DWAR(__FILE__,__LINE__,"Gimbal not mount.");		
 		return false;
 	}	
 	DJI::OSDK::Gimbal::SpeedData gimbal_speed;

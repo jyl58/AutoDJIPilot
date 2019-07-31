@@ -297,7 +297,7 @@ Commander::ZoomCamera(int print_fd){
 void 
 Commander::LoadPayloadPlugin(int print_fd){
 	if(_cmd_and_param.at(1).empty()){
-		DWAR("Load CMD need a param for dynamic lib path.",print_fd);
+		DWAR(__FILE__,__LINE__,"Load CMD need a param for dynamic lib path.",print_fd);
 		return;
 	}
 	//close if there is a plugin
@@ -307,7 +307,7 @@ Commander::LoadPayloadPlugin(int print_fd){
 	// open the user payload control plugin .so  
 	dynamic_lib_handler=dlopen(_cmd_and_param.at(1).c_str(),RTLD_NOW);
 	if(!dynamic_lib_handler){
-		DWAR("Load "+_cmd_and_param.at(1)+" dynamic lib err!",print_fd);
+		DWAR(__FILE__,__LINE__,"Load "+_cmd_and_param.at(1)+" dynamic lib err!",print_fd);
 	}
 	// function handler
 	typedef PayloadBase* (*payload_creat)(void);
@@ -319,7 +319,7 @@ Commander::LoadPayloadPlugin(int print_fd){
 	_payload_base=_creat_func();
 	
 	if(!_payload_base->init()){
-		DWAR("Init Payload control dynamic lib err!",print_fd);
+		DWAR(__FILE__,__LINE__,"Init Payload control dynamic lib err!",print_fd);
 	}
 }
 void 

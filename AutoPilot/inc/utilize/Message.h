@@ -30,14 +30,14 @@
 #define FLIGHTLOG(msg) FlightLog::writeLogBuffer(msg)
 
 //warning message 
-inline void DWAR(std::string msg,int fd = -1){														
-	std::string warn_message="[WAR]"+msg;
+inline void DWAR(std::string warn_file,int line ,std::string msg,int fd = -1){														
+	std::string warn_message="[WAR]"+warn_file+": "+std::to_string(line)+": "+ msg;
 	if(fd == -1){
-		std::cout<<"[WAR]"<<MESSAGEFORMATE<<msg<<std::endl;	
+		std::cout<<warn_message<<std::endl;	
 	}else{
 		send(fd,warn_message.c_str(),warn_message.size(),0);	
 	}
-	FlightLog::writeLogBufferWithLabel(warn_message);																
+	FlightLog::writeLogBuffer(warn_message);																
 }
 //notice 
 inline void NOTICE_MSG(int fd,std::string msg){

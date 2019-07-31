@@ -43,7 +43,7 @@ ConsoleServer::ConsoleServerInit(){
 	hits.ai_flags	=AI_PASSIVE;
 	int ret=getaddrinfo(NULL,_port,&hits,&result);
 	if(ret!=0){
-		DWAR("Get addr info err.");
+		DWAR(__FILE__,__LINE__,"Get addr info err.");
 		return false;
 	}
 	for(rp=result;rp!=NULL;rp=rp->ai_next){
@@ -58,7 +58,7 @@ ConsoleServer::ConsoleServerInit(){
 		so_linger.l_linger=1;
 		if(setsockopt(_socket_fd,SOL_SOCKET,SO_REUSEPORT,(void*)&reuse,sizeof(reuse)) <0 || 
 		   setsockopt(_socket_fd,SOL_SOCKET,SO_LINGER,&so_linger,sizeof(so_linger)) < 0){
-			DWAR("Socket set Opt err.");
+			DWAR(__FILE__,__LINE__,"Socket set Opt err.");
 			return false;
 		}
 		//
@@ -68,7 +68,7 @@ ConsoleServer::ConsoleServerInit(){
 		close(_socket_fd);
 	}
 	if(rp == NULL){
-		DWAR("There is no add info.");
+		DWAR(__FILE__,__LINE__,"There is no add info.");
 		return false;
 	}
 	//free
@@ -77,17 +77,17 @@ ConsoleServer::ConsoleServerInit(){
 	//set no block
 	long flags=fcntl(_socket_fd,F_GETFL);
 	if( flags< 0){
-		DWAR("get Socket flags err.");
+		DWAR(__FILE__,__LINE__,"get Socket flags err.");
 		return false;
 	}
 	flags |= O_NONBLOCK;
 	if(fcntl(_socket_fd,F_SETFL,flags) < 0){
-		DWAR("Set Socket no block err.");
+		DWAR(__FILE__,__LINE__,"Set Socket no block err.");
 		return false;
 	}
 	//listen
 	if(listen(_socket_fd,SOMAXCONN) ==-1){
-		DWAR("listen port err.");
+		DWAR(__FILE__,__LINE__,"listen port err.");
 		return false;
 	}
 	FLIGHTLOG("Socket is listenning.");
@@ -103,7 +103,7 @@ ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int ev
 	int link_fd=0;
 	link_fd = accept(sock_w->fd,(struct sockaddr*)&link_in,&len);
 	if(link_fd == -1){
-		DWAR("Socket accept err.");
+		DWAR(__FILE__,__LINE__,"Socket accept err.");
 		return;
 	}
 	FLIGHTLOG("There is a link comming.");
@@ -134,13 +134,13 @@ ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int ev
 void 
 ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int events){
 	if(EV_ERROR & events){
-		DWAR("EV event err.");
+		DWAR(__FILE__,__LINE__,"EV event err.");
 		return;
 	}
 	char buffer[TCP_BUFFER_MAX_SIZE]={0};
 	ssize_t read_size=recv(client_r->fd,buffer,TCP_BUFFER_MAX_SIZE,0);	
 	if(read_size < 0){
-		DWAR("Read socket err,err code: "+ std::to_string(errno));
+		DWAR(__FILE__,__LINE__,"Read socket err,err code: "+ std::to_string(errno));
 		usleep(50000);	
 		return ; 
 	}

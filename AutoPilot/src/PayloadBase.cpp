@@ -39,15 +39,15 @@ PayloadBase::~PayloadBase(){
 bool 
 PayloadBase::registRCResponseFunction(enum BUTTON button_number,rcResponseCallback response_function,const char* button_name){
 	if (button_number >= MAX_BUTTON){
-		DWAR("regist button number need <"+std::to_string(MAX_BUTTON));
+		DWAR(__FILE__,__LINE__,"regist button number need <"+std::to_string(MAX_BUTTON));
 		return false;
 	}
 	if(sizeof(button_name)>10){
-		DWAR("regist button name legth  need < 10 ");
+		DWAR(__FILE__,__LINE__,"regist button name legth  need < 10 ");
 		return false;	
 	}
 	if(_button_response[button_number]._func != nullptr){
-		DWAR("button"+std::to_string(button_number)+"already regist callback function");
+		DWAR(__FILE__,__LINE__,"button"+std::to_string(button_number)+"already regist callback function");
 	}
 	_button_response[button_number]._number	=button_number;
 	memcpy(_button_response[button_number]._name, button_name,10);
@@ -94,7 +94,7 @@ bool
 PayloadBase::registLuaCallFunction(luaScriptResponseCallback lua_call_function, const std::string& function_name){
 	if(!_lua_response->empty()){
 		if(_lua_response->find(function_name) != _lua_response->end()){
-			DWAR("function: "+function_name+" already regist callback function");
+			DWAR(__FILE__,__LINE__,"function: "+function_name+" already regist callback function");
 			return false;
 		}
 	}
@@ -108,7 +108,7 @@ PayloadBase::runLuaCallFunction(const std::string& function_name, UserData userd
 		//if find, then run user registed function		
 		fun->second(userdate);
 	}else{
-		DWAR("Can't find the function: "+function_name);
+		DWAR(__FILE__,__LINE__,"Can't find the function: "+function_name);
 		return false;
 	}
 	return true;

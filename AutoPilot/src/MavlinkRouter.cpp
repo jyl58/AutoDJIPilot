@@ -105,7 +105,7 @@ void MavlinkRouter::mavlinkRouterReadThread(){
 			// 500 byte with no mavlink message
 			if(byte_count>500){
 				//TODO: add process	with parse status 
-				DWAR("Exceed 500 byte with no MAVlink message.");
+				DWAR(__FILE__,__LINE__,"Exceed 500 byte with no MAVlink message.");
 				byte_count=0;
 				usleep(10000);		
 			}
