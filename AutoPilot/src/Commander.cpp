@@ -80,7 +80,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		//waiting fc init complete. max waiting time is 120 s
 		sleep(12);
 		try_count++;
-		FLIGHTLOG("Try" + std::to_string(try_count+1) +"th to connect the vehilce.");
+		FLIGHTLOG("Try " + std::to_string(try_count+1) +"th to connect the vehilce.");
 	}
 	if(try_count>=10){
 		delete _linux_setup;

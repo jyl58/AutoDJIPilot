@@ -37,7 +37,7 @@ inline void DWAR(std::string msg,int fd = -1){
 	}else{
 		send(fd,warn_message.c_str(),warn_message.size(),0);	
 	}
-	FLIGHTLOG(warn_message);																
+	FlightLog::writeLogBufferWithLabel(warn_message);																
 }
 //notice 
 inline void NOTICE_MSG(int fd,std::string msg){

@@ -15,7 +15,6 @@ LinuxSetup::LinuxSetup(LuaParser* lua_parser_pointer,const std::string& config_f
 	this->functionTimeout     = 1; // second
 	this->vehicle             = nullptr;
 	this->environment         = nullptr;
-	this->testSerialDevice    = nullptr;
 	this->useAdvancedSensing  = enableAdvancedSensing;
 
 	setupEnvironment(lua_parser_pointer,config_file_path);
@@ -29,10 +28,6 @@ LinuxSetup::~LinuxSetup(){
   if (environment){
     delete (environment);
     environment = nullptr;
-  }
-  if (testSerialDevice){
-    delete (testSerialDevice);
-    testSerialDevice = nullptr;
   }
 }
 
@@ -59,6 +54,10 @@ bool LinuxSetup::initVehicle(){
 		                             threadSupport,
 		                             this->useAdvancedSensing);
 
+	if(this->vehicle==nullptr){
+		FLIGHTLOG("Creat new vehile err.");
+		return false;
+	}
 	// Check if the communication is working fine
 	if (!vehicle->protocolLayer->getDriver()->getDeviceStatus()){
 		FLIGHTLOG("Communicate with DJI incorrectly.");
@@ -86,38 +85,3 @@ bool LinuxSetup::initVehicle(){
 	return true;
 }
 
-bool LinuxSetup::validateSerialPort(){
-  static const int BUFFER_SIZE = 2048;
-
-  //! Check the serial channel for data
-  uint8_t buf[BUFFER_SIZE];
-  if (!testSerialDevice->setSerialPureTimedRead())
-  {
-    DERROR("Failed to set up port for timed read.\n");
-    return (false);
-  };
-  usleep(100000);
-  if (testSerialDevice->serialRead(buf, BUFFER_SIZE)){
-    DERROR("Succeeded to read from serial device\n");
-  }else{
-    DERROR("\"Failed to read from serial device. The Onboard SDK is not "
-             "communicating with your drone. \n");
-    // serialDevice->unsetSerialPureTimedRead();
-    return (false);
-  }
-
-  // If we reach here, _serialRead succeeded.
-  int baudCheckStatus = testSerialDevice->checkBaudRate(buf);
-  if (baudCheckStatus == -1){
-    DERROR("No data on the line. Is your drone powered on?\n");
-    return false;
-  }
-  if (baudCheckStatus == -2){
-    DERROR("Baud rate mismatch found. Make sure DJI Assistant 2 has the same "
-             "baud setting as the one in User_Config.h\n");
-    return (false);
-  }
-  // All the tests passed and the serial device is properly set up
-  testSerialDevice->unsetSerialPureTimedRead();
-  return (true);
-}

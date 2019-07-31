@@ -45,7 +45,6 @@ public:
 public:
   void setupEnvironment(LuaParser* lua_parser_pointer,const std::string& config_file_path);
   bool initVehicle();
-  bool validateSerialPort();
 
 public:
 	void setTestSerialDevice(DJI::OSDK::LinuxSerialDevice* serialDevice);
@@ -77,8 +76,7 @@ public:
 		return environment->getBaudrate();
 	}
 private:
-	DJI::OSDK::Vehicle*              vehicle;
-	DJI::OSDK::LinuxSerialDevice*    testSerialDevice;
+	DJI::OSDK::Vehicle*              vehicle=nullptr;
 	LinuxEnvironment*                environment;
 	DJI::OSDK::Vehicle::ActivateData activateData;
 	int                              functionTimeout; // seconds
