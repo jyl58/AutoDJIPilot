@@ -10,7 +10,7 @@
 #include <thread>
 #include <mutex>
 #include <string>
-#define LOG_PATH "/"
+#define LOG_PATH "/AutoDJIPilot/build/AutoPilot/log/"
 class FlightLog{
 public:
 		FlightLog();

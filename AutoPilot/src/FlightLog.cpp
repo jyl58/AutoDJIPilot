@@ -83,16 +83,16 @@ void FlightLog::writeLogThread(){
 	timeinfo=localtime(&now_raw_time);
 
 	char temp_name[1024];
-	sprintf(temp_name,"FlightLog-%d-%.2d-%.2d-%.2d:%.2d:%.2d.log\n",1900+timeinfo->tm_year, timeinfo->tm_mon, timeinfo->tm_mday,timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+	sprintf(temp_name,"FlightLog-%d-%.2d-%.2d-%.2d:%.2d:%.2d.log",1900+timeinfo->tm_year, timeinfo->tm_mon, timeinfo->tm_mday,timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
 	std::string log_name(temp_name);
 	
 	//get current path 
-	char  cwd[1024];
+	/*char  cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL){
     	DERR("Error getting current directory.");
-	}
-	std::string log_path(cwd);
-	log_path=log_path+"/log/";
+	}*/
+	std::string log_path=getenv("HOME");
+	log_path=log_path+LOG_PATH;
 	//creat a log dirctory  at current directory if not exist
 	if(access(log_path.c_str(),W_OK|R_OK) !=0 ){
 		if(mkdir(log_path.c_str(), S_IRWXU | S_IXGRP |S_IRGRP |S_IROTH | S_IXOTH) !=0){
