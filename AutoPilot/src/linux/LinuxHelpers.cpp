@@ -61,12 +61,9 @@ bool LinuxSetup::initVehicle(){
 
 	// Check if the communication is working fine
 	if (!vehicle->protocolLayer->getDriver()->getDeviceStatus()){
-		std::cout << "Comms appear to be incorrectly set up. Exiting.\n";
 		FLIGHTLOG("Communicate with DJI incorrectly.");
 		delete (vehicle);
-		delete (environment);
 		this->vehicle     = nullptr;
-		this->environment = nullptr;
 		return false;
 	}
 
@@ -81,8 +78,6 @@ bool LinuxSetup::initVehicle(){
 		FLIGHTLOG("DJI Vehicle activate fail!");
 		ACK::getErrorCodeMessage(ack, __func__);
 		delete (vehicle);
-		delete (environment);
-		this->environment = nullptr;
 		this->vehicle     = nullptr;
 		return false;
 	}else{

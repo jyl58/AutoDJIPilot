@@ -39,19 +39,19 @@ const command_function_t Commander::cmd_table[]={
 }; 
 
 const char* Commander::cmd_description[]={
-	"\t\tPrint the Vehicle and gimbal status.",
-	"\t\tPrint the input config message in config.lua file.",
-	"\t\tRun the external lua script file ,need a *.lua file path as a argument.",
-	"\t\tPause the Runing lua script.",
-	"\t\tContinue run the lua script.",
-	"\t\tInterrupt run the lua script.",
-	"\t\tLoad the user's Payload control plugin,need a *.so file path as a argument.",
-	"\t\tTake a photo use dji camera.",
-	"\t\tControl dji video start or stop record,need (start|stop)as a argument.",
-	"\t\tSet gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0).",
-	"\t\tZoom camera,just support z30 ,need(pos|speed|step)as a subcmd.(pos [100,3000] | speed [-100,100] |step [].",
-	"\t\tPrint this help message.",
-	"\t\tExit the application."
+	"\tPrint the Vehicle and gimbal status.",
+	"\tPrint the input config message in config.lua file.",
+	"\tRun the external lua script file ,need a *.lua file path as a argument.",
+	"\tPause the Runing lua script.",
+	"\tContinue run the lua script.",
+	"\tInterrupt run the lua script.",
+	"\tLoad the user's Payload control plugin,need a *.so file path as a argument.",
+	"\tTake a photo use dji camera.",
+	"\tControl dji video start or stop record,need (start|stop)as a argument.",
+	"\tSet gimbal angle this angle relevtive vehicle's head (-pi,pi],e.g.(gimbal angle 0 10 0).",
+	"\tZoom camera,just support z30 ,need(pos|speed|step)as a subcmd.(pos [100,3000] | speed [-100,100] |step [].",
+	"\tPrint this help message.",
+	"\tExit the application."
 };
 void 
 Commander::AutopilotSystemInit(const std::string& config_file_path){
@@ -72,7 +72,19 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		exit(1);
 #ifdef OFFLINE_DEBUG
 #else		
-	if(!_linux_setup->initVehicle()){
+	int try_count=0;
+	while(try_count<10){
+		if(_linux_setup->initVehicle()){
+			break;
+		}
+		//waiting fc init complete. max waiting time is 120 s
+		sleep(12);
+		try_count++;
+		FLIGHTLOG("Try" + std::to_string(try_count+1) +"th to connect the vehilce.")
+	}
+	if(try_count>=10){
+		delete _linux_setup;
+		_linux_setup=nullptr;
 		DERR("Connect to vehicle err!");
 		exit(1);
 	}
@@ -83,6 +95,8 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		exit(1);
 	}
 	if(!_flight_core->flightCoreInit(_linux_setup->getVehicle())){
+		delete _flight_core;
+		_flight_core=nullptr;
 		DERR("Flight core init err!");
 		exit(1);
 	}
@@ -101,6 +115,8 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		exit(1);
 	}
 	if(!_console_server->ConsoleServerInit()){
+		delete _console_server;
+		_console_server=nullptr;
 		DERR("Flight Console Server init err!");
 		exit(1);
 	}

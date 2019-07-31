@@ -28,7 +28,7 @@ int main(int argc, char** argv){
 		//get string  form stand input
 		getline(std::cin,input); // read a line input include space
 		if(input.empty()){
-			std::cout<<"\n"<<AutoDjiLogo;	
+			std::cout<<AutoDjiLogo;	
 			usleep(100000);//100ms
 			continue;
 		}
