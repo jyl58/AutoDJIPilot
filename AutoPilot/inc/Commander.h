@@ -28,7 +28,7 @@
 #include "linux/LinuxHelpers.hpp"
 #include "geo.h"
 
-#define DEFAULT_BIN_DIRECTORY "/AutoDJIPilot/APP/bin/"
+#define DEFAULT_LUA_DIRECTORY "/usr/local/share/AutoDjiPilot/"
 typedef void (*cmdfunction)(int);
 typedef struct CMDFUNCTION{
 	char cmd_name[10];
@@ -66,8 +66,6 @@ private:
 	static FlightCore* _flight_core;
 	static LuaParser* _lua_parser;
 	static PayloadBase* _payload_base;
-	
-	static std::string      _env_home;
 	
 	static const command_function_t cmd_table[];
 	static const char* cmd_description[];

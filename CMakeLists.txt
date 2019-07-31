@@ -23,4 +23,14 @@ add_subdirectory(lib/Onboard-SDK/)
 add_subdirectory(lib/lua-5.3.5/)
 add_subdirectory(AutoPilot/)
 
+#set the app lua script path
+file(GLOB LUA_APP_SCRIPT_FILE
+	APP/bin/*.lua
+)
 
+install(FILES ${LUA_APP_SCRIPT_FILE} DESTINATION /usr/local/share/AutoDjiPilot)
+
+file(GLOB LUA_LIB_SCRIPT_FILE
+	APP/lib/*.lua	
+)
+install(FILES ${LUA_LIB_SCRIPT_FILE} DESTINATION /usr/local/share/AutoDjiPilot/lib)

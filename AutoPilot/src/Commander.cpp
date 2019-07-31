@@ -20,7 +20,6 @@ void* Commander::dynamic_lib_handler=nullptr;
 bool Commander::main_thread_need_exit=false;
 bool Commander::tcp_link_need_disconnect=false;
 std::vector<std::string> Commander::_cmd_and_param;
-std::string  Commander::_env_home;
 //note: name length is little 10 char
 const command_function_t Commander::cmd_table[]={
 	{"state",Commander::PrintFlightStatusCMD},
@@ -124,7 +123,6 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		DERR("Event Manage init err!");
 		exit(1);
 	}
-	_env_home=getenv("HOME");
 }
 void 
 Commander::AutopilotSystemExit(){
@@ -334,7 +332,7 @@ Commander::RunLuaScript(int print_fd){
 	std::string file_absolute_path=_cmd_and_param.at(1);
 	if(file_absolute_path.find("/")==std::string::npos){
 		//just give a file name,so find in default directory
-		std::string default_bin_path= _env_home+DEFAULT_BIN_DIRECTORY+file_absolute_path;
+		std::string default_bin_path= DEFAULT_LUA_DIRECTORY+file_absolute_path;
 		if(access(default_bin_path.c_str(),F_OK) == -1){
 			NOTICE_MSG(print_fd,"Do not find the "+file_absolute_path+" in default bin directory.");
 			return;

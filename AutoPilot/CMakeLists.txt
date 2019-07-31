@@ -72,5 +72,7 @@ target_link_libraries(${PROJECT_NAME}
 	${ev_LIBRARIES_DIR} 
 	-ldl 
 )
+install(TARGETS ${PROJECT_NAME} DESTINATION /usr/local/bin)
+
 
 
