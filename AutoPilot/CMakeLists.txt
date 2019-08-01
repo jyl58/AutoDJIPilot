@@ -51,6 +51,7 @@ src/linux/LinuxEnvironment.cpp
 src/dev/InterfaceSerial.cpp
 src/DJI_MAVlinkBrige.cpp
 src/utilize/geo.cpp
+src/utilize/Message.cpp
 src/LuaParser.cpp
 src/FlightCore.cpp
 src/LuaInterface.cpp

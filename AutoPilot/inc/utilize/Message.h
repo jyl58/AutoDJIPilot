@@ -30,31 +30,10 @@
 #define FLIGHTLOG(msg) FlightLog::writeLogBuffer(msg)
 
 //warning message 
-inline void DWAR(std::string warn_file,int line ,std::string msg,int fd = -1){														
-	std::string warn_message="[WAR]"+warn_file+": "+std::to_string(line)+": "+ msg;
-	if(fd == -1){
-		std::cout<<warn_message<<std::endl;	
-	}else{
-		send(fd,warn_message.c_str(),warn_message.size(),0);	
-	}
-	FlightLog::writeLogBuffer(warn_message);																
-}
+void DWAR(std::string warn_file,int line ,std::string msg,int fd = -1);													
 //notice 
-inline void NOTICE_MSG(int fd,std::string msg){
-	if(fd == -1){							
-		std::cout<<msg<<std::endl;			
-	}else{									
-		send(fd,msg.c_str(),msg.size(),0);	
-		send(fd,"\n",1,0);					
-	}		
-}
+void NOTICE_MSG(int fd,std::string msg);
 //out logo
-inline void LOGO(int fd,std::string msg){
-	if(fd == -1){							
-		std::cout<<msg<<std::flush;		
-	}else{									
-		send(fd,msg.c_str(),msg.size(),0);
-	}		
-}
+void LOGO(int fd,std::string msg);
 //logo
 extern const std::string AutoDjiLogo;
