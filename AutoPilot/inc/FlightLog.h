@@ -13,7 +13,7 @@
 #ifdef OFFLINE_DEBUG
 	#define LOG_PATH "/var/log/AutoDjiPilot/"
 #else
-	#define LOG_PATH "/mnt/dietpi_userdata/AutoDjiPilot/log/"
+	#define LOG_PATH "/mnt/dietpi_userdata/AutoDjiPilotLog/"
 #endif
 class FlightLog{
 public:
