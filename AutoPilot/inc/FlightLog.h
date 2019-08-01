@@ -10,7 +10,11 @@
 #include <thread>
 #include <mutex>
 #include <string>
-#define LOG_PATH "/var/log/AutoDjiPilot/"
+#ifdef OFFLINE_DEBUG
+	#define LOG_PATH "/var/log/AutoDjiPilot/"
+#else
+	#define LOG_PATH "/mnt/dietpi_userdata/AutoDjiPilot/log/"
+#endif
 class FlightLog{
 public:
 		FlightLog();
