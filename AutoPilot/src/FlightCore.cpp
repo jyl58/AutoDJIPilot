@@ -8,17 +8,39 @@
 #include <iostream>
 #include <cmath>
 #include "FlightCore.h"
+#include "MavlinkRouter.h"
+#include "LuaParser.h"
 #include "geo.h"
 #include "dji_control.hpp"
 #include "Message.h"
-#include "DJI_MAVlinkBrige.h"
 //init static var
 bool FlightCore::_auto_running_need_break=false;
 DJI::OSDK::Vehicle* FlightCore::_vehicle=nullptr;
+std::mutex* FlightCore::_vehicle_data_mutex=nullptr;
+bool FlightCore::_vehicle_rtk_avilable;
+TypeMap<TOPIC_STATUS_FLIGHT>::type 		FlightCore::_flightStatus;
+TypeMap<TOPIC_STATUS_DISPLAYMODE>::type	FlightCore::_display_mode;
+TypeMap<TOPIC_GPS_FUSED>::type 			FlightCore::_current_lat_lon;
+TypeMap<TOPIC_GPS_DETAILS>::type 		FlightCore::_gps_details;
+TypeMap<TOPIC_GPS_SIGNAL_LEVEL>::type 	FlightCore::_gps_signal_level;
+TypeMap<TOPIC_HEIGHT_FUSION>::type 	FlightCore::_height_fusioned;
+TypeMap<TOPIC_RC_FULL_RAW_DATA>::type 	FlightCore::_rc_full_raw_data;
+TypeMap<TOPIC_RC>::type 				FlightCore::_rc_data;
+TypeMap<TOPIC_RC_WITH_FLAG_DATA>::type 	FlightCore::_rc_witch_flag;
+TypeMap<TOPIC_VELOCITY>::type 			FlightCore::_velocity;
+TypeMap<TOPIC_QUATERNION>::type 		FlightCore::_quaternion;
+TypeMap<TOPIC_BATTERY_INFO>::type 		FlightCore::_battery_info;
+TypeMap<TOPIC_RTK_POSITION>::type 		FlightCore::_rtk_pos;
+TypeMap<TOPIC_RTK_POSITION_INFO>::type 	FlightCore::_rtk_pos_info;
+TypeMap<TOPIC_RTK_VELOCITY>::type 		FlightCore::_rtk_velocity;
+TypeMap<TOPIC_RTK_YAW>::type			FlightCore::_rtk_yaw;
+TypeMap<TOPIC_RTK_YAW_INFO>::type		FlightCore::_rtk_yaw_info;
+TypeMap<TOPIC_GIMBAL_ANGLES>::type		FlightCore::_gimbal_angle;
+TypeMap<TOPIC_GIMBAL_STATUS>::type		FlightCore::_gimbal_status;
+TypeMap<TOPIC_GIMBAL_CONTROL_MODE>::type	FlightCore::_gimbal_mode;
 
 FlightCore::FlightCore()
-:_thread_need_exit(false),
-_vehicle_rtk_avilable(false)
+:_thread_need_exit(false)
 {
 }
 
@@ -45,7 +67,7 @@ FlightCore::djiGetControlAuthority(){
 	int functionTimeout=1;
 	char func[50];
 	if(_vehicle == nullptr){
-		DWAR(__FILE__,__LINE__,"Vehicle pointer is nullptr.");	
+		DWAR(__FILE__,__LINE__,"Vehicle pointer is nullptr.",luaSocketPrintFd);	
 		return false;
 	}
 	//get control authority //try 3 times for roubust
@@ -62,7 +84,7 @@ FlightCore::djiGetControlAuthority(){
 	}
 	if(try_times>=3){
 		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"Get control authority err: "+errmsg);	
+		DWAR(__FILE__,__LINE__,"Get control authority err: "+errmsg,luaSocketPrintFd);	
 		return false;
 	}
 	return true;
@@ -72,7 +94,7 @@ FlightCore::djiReleaseControlAuthority(){
 	int functionTimeout=1;
 	char func[50];
 	if(_vehicle == nullptr){
-		DWAR(__FILE__,__LINE__,"Vehicle pointer is nullptr.");	
+		DWAR(__FILE__,__LINE__,"Vehicle pointer is nullptr.",luaSocketPrintFd);	
 		return false;
 	}
 	//Release control authority//try 3 times for roubust
@@ -89,7 +111,7 @@ FlightCore::djiReleaseControlAuthority(){
 	}
 	if(try_times>=3){
 		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"Release control authority err: "+errmsg);	
+		DWAR(__FILE__,__LINE__,"Release control authority err: "+errmsg,luaSocketPrintFd);	
 		return false;
 	}
 	return true;
@@ -139,6 +161,9 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 		DWAR(__FILE__,__LINE__,"Subscribe Start Package 0 err: "+errmsg);	
 		return false;
 	}
+	/*register a callback for pkg index 0*/
+	_vehicle->subscribe->registerUserPackageUnpackCallback(0,FlightCore::PKGIndex_0_Callback);
+
 	//package 1: lat/lon/alt and Velocity at 10 hz
 	pkgIndex				=1;
 	freq 					=10;
@@ -158,8 +183,8 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 		DWAR(__FILE__,__LINE__,"Subscribe Start Package 1 err: "+errmsg);	
 		return false;
 	}
-	/*register a callback for global pos mavlink route msg*/
-	_vehicle->subscribe->registerUserPackageUnpackCallback(1,GlobalPosCallback);
+	/*register a callback for pkg index 1*/
+	_vehicle->subscribe->registerUserPackageUnpackCallback(1,FlightCore::PKGIndex_1_Callback);
 
 	//package 2: RC channel and fusion Velocity at 20 hz
 	pkgIndex				=2;
@@ -180,7 +205,8 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 		DWAR(__FILE__,__LINE__,"Subscribe Start Package 2 err: "+errmsg);	
 		return false;
 	}
-	_vehicle->subscribe->registerUserPackageUnpackCallback(2,RCCallback);
+	/*register a callback for pkg index 2*/
+	_vehicle->subscribe->registerUserPackageUnpackCallback(2,FlightCore::PKGIndex_2_Callback);
 
 	//package 3: Quaternion  at 100 hz
 	pkgIndex					=3;
@@ -201,6 +227,8 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 		DWAR(__FILE__,__LINE__,"Subscribe Start Package 3 err: "+errmsg);	
 		return false;
 	}
+	/*register a callback for pkg index 3*/
+	_vehicle->subscribe->registerUserPackageUnpackCallback(3,FlightCore::PKGIndex_3_Callback);
 	
 	//package 4: RTK  at 5 hz
 	pkgIndex					=4;
@@ -215,7 +243,7 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	}
 	subcribeStatus				=_vehicle->subscribe->startPackage(pkgIndex,responseTimeout);
 	if(subcribeStatus.data == ErrorCode::SubscribeACK::SOURCE_DEVICE_OFFLINE){
-		DWAR(__FILE__,__LINE__,"RTK Not Available");
+		FLIGHTLOG("RTK Not Available.");
 		_vehicle_rtk_avilable=false;
 	}else {
 		_vehicle_rtk_avilable=true;
@@ -227,7 +255,9 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 			return false;
 		}
 	}
-
+	/*register a callback for pkg index 4*/
+	_vehicle->subscribe->registerUserPackageUnpackCallback(4,FlightCore::PKGIndex_4_Callback);
+	
 	exitDjiThread();
 	//creat a new mutex 
 	_vehicle_data_mutex=new std::mutex();
@@ -235,45 +265,93 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	_dji_FC_link_thread=new std::thread(&FlightCore::readVehicleStatusThread,this);
 	return true;
 }
+void FlightCore::PKGIndex_0_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
+	_vehicle_data_mutex->lock();
+	_flightStatus 		= vehicle->subscribe->getValue<TOPIC_STATUS_FLIGHT>();
+	_display_mode		= vehicle->subscribe->getValue<TOPIC_STATUS_DISPLAYMODE>(); 
+	_battery_info		= vehicle->subscribe->getValue<TOPIC_BATTERY_INFO>();
+	_gps_details		= vehicle->subscribe->getValue<TOPIC_GPS_DETAILS>();
+	//unlock the mutex		
+	_vehicle_data_mutex->unlock();
+}
+void FlightCore::PKGIndex_1_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
+	_vehicle_data_mutex->lock();
+	_current_lat_lon	= vehicle->subscribe->getValue<TOPIC_GPS_FUSED>();
+	_height_fusioned	= vehicle->subscribe->getValue<TOPIC_HEIGHT_FUSION>();
+	_gimbal_status		= vehicle->subscribe->getValue<TOPIC_GIMBAL_STATUS>();
+	
+	if(_gimbal_status.mountStatus){
+		_gimbal_angle	= vehicle->subscribe->getValue<TOPIC_GIMBAL_ANGLES>();
+		_gimbal_mode	= vehicle->subscribe->getValue<TOPIC_GIMBAL_CONTROL_MODE>();
+	}
+	//unlock the mutex		
+	_vehicle_data_mutex->unlock();
+}
+void FlightCore::PKGIndex_2_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
+	_vehicle_data_mutex->lock();
+	_velocity			= vehicle->subscribe->getValue<TOPIC_VELOCITY>();
+	_gps_signal_level	= vehicle->subscribe->getValue<TOPIC_GPS_SIGNAL_LEVEL>();
+	_rc_full_raw_data	= vehicle->subscribe->getValue<TOPIC_RC_FULL_RAW_DATA>();
+	_rc_data			= vehicle->subscribe->getValue<TOPIC_RC>();
+	_rc_witch_flag	    = vehicle->subscribe->getValue<TOPIC_RC_WITH_FLAG_DATA>();
+	//unlock the mutex		
+	_vehicle_data_mutex->unlock();
+}
+void FlightCore::PKGIndex_3_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
+	_vehicle_data_mutex->lock();
+	_quaternion	  		=  vehicle->subscribe->getValue<TOPIC_QUATERNION>();
+	//unlock the mutex		
+	_vehicle_data_mutex->unlock();
+}
 
+void FlightCore::PKGIndex_4_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
+	if(_vehicle_rtk_avilable){
+		_rtk_pos	  		= vehicle->subscribe->getValue<TOPIC_RTK_POSITION>();
+		_rtk_pos_info	  	= vehicle->subscribe->getValue<TOPIC_RTK_POSITION_INFO>();
+		_rtk_velocity	  	= vehicle->subscribe->getValue<TOPIC_RTK_VELOCITY>();
+		_rtk_yaw	  		= vehicle->subscribe->getValue<TOPIC_RTK_YAW>();
+		_rtk_yaw_info	  	= vehicle->subscribe->getValue<TOPIC_RTK_YAW_INFO>();
+	}
+}
 void FlightCore::readVehicleStatusThread(){
 	FLIGHTLOG("Start run flight core thread");
+	//loop send flight status to mavlink
 	while(!_thread_need_exit){
 		//lock the mutex 
 		_vehicle_data_mutex->lock();
-		//flight status
-		_flightStatus 		= _vehicle->subscribe->getValue<TOPIC_STATUS_FLIGHT>();
-		_display_mode		= _vehicle->subscribe->getValue<TOPIC_STATUS_DISPLAYMODE>(); 
-		_battery_info		= _vehicle->subscribe->getValue<TOPIC_BATTERY_INFO>();
-		_gps_signal_level	= _vehicle->subscribe->getValue<TOPIC_GPS_SIGNAL_LEVEL>();
-		// lat lon 
-		_current_lat_lon	= _vehicle->subscribe->getValue<TOPIC_GPS_FUSED>();
-		_height_fusioned	= _vehicle->subscribe->getValue<TOPIC_HEIGHT_FUSION>();
-		_gps_details		= _vehicle->subscribe->getValue<TOPIC_GPS_DETAILS>();
-		_rc_full_raw_data	= _vehicle->subscribe->getValue<TOPIC_RC_FULL_RAW_DATA>();
-		_rc_data			=_vehicle->subscribe->getValue<TOPIC_RC>();
-		_velocity	  		= _vehicle->subscribe->getValue<TOPIC_VELOCITY>();
-		_quaternion	  		= _vehicle->subscribe->getValue<TOPIC_QUATERNION>();
-		_gimbal_status		=_vehicle->subscribe->getValue<TOPIC_GIMBAL_STATUS>();
-		if(_gimbal_status.mountStatus){
-			_gimbal_angle		=_vehicle->subscribe->getValue<TOPIC_GIMBAL_ANGLES>();
-			_gimbal_mode		=_vehicle->subscribe->getValue<TOPIC_GIMBAL_CONTROL_MODE>();
-		}
-		if(_vehicle_rtk_avilable){
-			_rtk_pos	  		= _vehicle->subscribe->getValue<TOPIC_RTK_POSITION>();
-			_rtk_pos_info	  	= _vehicle->subscribe->getValue<TOPIC_RTK_POSITION_INFO>();
-			_rtk_velocity	  	= _vehicle->subscribe->getValue<TOPIC_RTK_VELOCITY>();
-			_rtk_yaw	  		= _vehicle->subscribe->getValue<TOPIC_RTK_YAW>();
-			_rtk_yaw_info	  	= _vehicle->subscribe->getValue<TOPIC_RTK_YAW_INFO>();
-		}
+		//check interrupt
+		checkRCInterruptLuaRun();
+		//send vehicle location msg by mavlink protocol
+		MavlinkRouter::sendLocation(_current_lat_lon.latitude*RAD2DEG,_current_lat_lon.longitude*RAD2DEG,_height_fusioned,_velocity.data.x,_velocity.data.y,_velocity.data.z);
+		//write vehicle location to log file
+		FLIGHTLOG("Location: "+std::to_string(_current_lat_lon.latitude*RAD2DEG)+","+std::to_string(_current_lat_lon.longitude*RAD2DEG)+","+std::to_string(_height_fusioned));
+		
 		//unlock the mutex		
 		_vehicle_data_mutex->unlock();
-		usleep(5000); //sleep 5 ms
+		usleep(50000); //sleep 50 ms
 	}
 	FLIGHTLOG("Exit flight core thread");
 	//remove the subscribe the package	
 	for (int i=0;i<MAX_PKG_COUNT;i++){
 		_vehicle->subscribe->removePackage(i,1);
+	}
+}
+void 
+FlightCore::checkRCInterruptLuaRun(){
+	static int _rc_break_auto_control_count;
+	if(!LuaParser::LuaScriptThreadRunning()){
+		_rc_break_auto_control_count=0;
+		return;
+	}
+	if(_rc_witch_flag.roll != 0.0f || _rc_witch_flag.pitch != 0.0f || _rc_witch_flag.yaw != 0.0f || _rc_witch_flag.throttle != 0.0f){
+		_rc_break_auto_control_count++;
+	}else{
+		_rc_break_auto_control_count=0;
+	}
+	// 20 hz: 50ms*20=1000ms
+	if(_rc_break_auto_control_count >= 20){
+		_rc_break_auto_control_count=0;
+		LuaParser::LuaInterruptRuning("RC operation.");
 	}
 }
 void 
@@ -351,11 +429,11 @@ FlightCore::getVehicleBearing(){
 bool 
 FlightCore::djiTakeoff(){
 	if(_flightStatus == VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running takeoff, but the vehicle is in air already");
+		DWAR(__FILE__,__LINE__,"Running takeoff, but the vehicle is in air already",luaSocketPrintFd);
 		return true;
 	}
 	if(_gps_signal_level<3){
-		DWAR(__FILE__,__LINE__,"Takeoff need GPS signal level >=3.");		
+		DWAR(__FILE__,__LINE__,"Takeoff need GPS signal level >=3.",luaSocketPrintFd);		
 		return false;
 	}
 
@@ -366,7 +444,7 @@ FlightCore::djiTakeoff(){
 	if(ACK::getError(takeoffstatus) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(takeoffstatus,func);
 		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"Send takeoff CMD err:"+errmsg);		
+		DWAR(__FILE__,__LINE__,"Send takeoff CMD err:"+errmsg,luaSocketPrintFd);		
 		return false;
 	}
 	/*First check: motor is start*/
@@ -379,7 +457,7 @@ FlightCore::djiTakeoff(){
 			usleep(100000); //waiting 30*100ms=3s
 		}
 		if(cmdstart == 20){
-			DWAR(__FILE__,__LINE__,"Takeoff filed, Motors are not spining");		
+			DWAR(__FILE__,__LINE__,"Takeoff filed, Motors are not spining",luaSocketPrintFd);		
 			return false;
 		}
 	}else{
@@ -397,7 +475,7 @@ FlightCore::djiTakeoff(){
 			usleep(100000);
 		}
 		if(onground_count == 100){
-			DWAR(__FILE__,__LINE__,"Takeoff filed, Vehicle is still on the ground,but motors is spin ");		
+			DWAR(__FILE__,__LINE__,"Takeoff filed, Vehicle is still on the ground,but motors is spin ",luaSocketPrintFd);		
 			return false;
 		}
 	}else{
@@ -414,7 +492,7 @@ FlightCore::djiTakeoff(){
 		   _display_mode != VehicleStatus::DisplayMode::MODE_ATTITUDE){
 			//std::cout<<"Takeoff successful"<<"\n"<<std::endl;
 		}else{
-			DWAR(__FILE__,__LINE__,"Takeoff finished,but the vehicle is in an unexpected mode");
+			DWAR(__FILE__,__LINE__,"Takeoff finished,but the vehicle is in an unexpected mode",luaSocketPrintFd);
 			return false;			
 		}
 	}else{
@@ -424,7 +502,7 @@ FlightCore::djiTakeoff(){
 }
 bool FlightCore::djiLanding(){
 	if(_flightStatus == VehicleStatus::FlightStatus::ON_GROUND){
-		DWAR(__FILE__,__LINE__,"Running landing ,but the the vehicle is on ground already");	
+		DWAR(__FILE__,__LINE__,"Running landing ,but the the vehicle is on ground already",luaSocketPrintFd);	
 		return true;
 	}
 	int timeout=1;
@@ -433,7 +511,7 @@ bool FlightCore::djiLanding(){
 	if(ACK::getError(landingStatus) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(landingStatus,func);
 		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"Send landing CMD err:"+errmsg);		
+		DWAR(__FILE__,__LINE__,"Send landing CMD err:"+errmsg,luaSocketPrintFd);		
 		return false;	
 	}
 	//first check landing stared
@@ -463,7 +541,7 @@ bool FlightCore::djiLanding(){
 }
 bool FlightCore::djiGoHome(){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running go home, but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Running go home, but the vehicle is not in air.",luaSocketPrintFd);	
 		return false;
 	}
 	int timeout=1;
@@ -472,7 +550,7 @@ bool FlightCore::djiGoHome(){
 	if(ACK::getError(goHomeStatus) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(goHomeStatus,func);
 		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"send go home CMD err:"+errmsg);
+		DWAR(__FILE__,__LINE__,"send go home CMD err:"+errmsg,luaSocketPrintFd);
 		return false;
 	}
 	//first check: start go home
@@ -502,7 +580,7 @@ bool FlightCore::djiGoHome(){
 */
 bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in_m){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running move by z offset,but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Running move by z offset,but the vehicle is not in air.",luaSocketPrintFd);	
 		return false;
 	}
 	TypeMap<TOPIC_HEIGHT_FUSION>::type 	task_startAltitude=_height_fusioned;
@@ -533,7 +611,7 @@ bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in
 }
 bool FlightCore::djiMoveZToTarget(float target_alt_m){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running move to z target, but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Running move to z target, but the vehicle is not in air.",luaSocketPrintFd);	
 		return false;
 	}
 	return djiMoveZByOffset(target_alt_m-_height_fusioned);
@@ -545,7 +623,7 @@ bool FlightCore::djiMoveZToTarget(float target_alt_m){
 */
 bool FlightCore::djiMoveByGPS(double target_lat_deg,double target_lon_deg){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running move by gps,but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Running move by gps,but the vehicle is not in air.",luaSocketPrintFd);	
 		return false;
 	}
 	float x_offset=0;
@@ -562,7 +640,7 @@ bool FlightCore::djiMoveByGPS(double target_lat_deg,double target_lon_deg){
 */
 bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float pos_threshold_in_m){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Runing move by x_y offset,but vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Runing move by x_y offset,but vehicle is not in air.",luaSocketPrintFd);	
 		return false;
 	}
 	//record the start point
@@ -629,7 +707,7 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 bool	
 FlightCore::djiMoveByBearingAndDistance(float bearing,float distance){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Run reletive fly, but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Run reletive fly, but the vehicle is not in air.",luaSocketPrintFd);	
 		return false;
 	}
 	double lat;
@@ -643,7 +721,7 @@ FlightCore::djiMoveByBearingAndDistance(float bearing,float distance){
 */
 bool  FlightCore::djiMoveByVelocity(float vx,float vy,float vz){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Run velocity fly ,but the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Run velocity fly ,but the vehicle is not in air.",luaSocketPrintFd);	
 		return false;
 	}
 	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
@@ -658,7 +736,7 @@ bool  FlightCore::djiMoveByVelocity(float vx,float vy,float vz){
 */
 bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Run turn head,but  the vehicle is not in air.");	
+		DWAR(__FILE__,__LINE__,"Run turn head,but  the vehicle is not in air.",luaSocketPrintFd);	
 		return false;
 	}
 	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
@@ -697,7 +775,7 @@ bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desired ,float z_offset_Desired, float yaw_Desired,float pos_threshold_in_m,float yaw_threshold_in_deg){
 	
 	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Run the move by pos offset,but vehicle is not in air");	
+		DWAR(__FILE__,__LINE__,"Run the move by pos offset,but vehicle is not in air",luaSocketPrintFd);	
 		return false;
 	}
 	Telemetry::Vector3f localoffset;
@@ -780,7 +858,7 @@ bool FlightCore::djiArmMotor(){
 	if(ACK::getError(cmd_status) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(cmd_status,func);
 		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"Send arm motor cmd err:"+errmsg);	
+		DWAR(__FILE__,__LINE__,"Send arm motor cmd err:"+errmsg,luaSocketPrintFd);	
 		return false;
 	}
 	return true;
@@ -791,7 +869,7 @@ bool FlightCore::djiDisarmMotor(){
 	if(ACK::getError(cmd_status) != ACK::SUCCESS){
 		ACK::getErrorCodeMessage(cmd_status,func);
 		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"Send disarm motor cmd err:"+errmsg);	
+		DWAR(__FILE__,__LINE__,"Send disarm motor cmd err:"+errmsg,luaSocketPrintFd);	
 		return false;
 	}
 	return true;
@@ -799,7 +877,7 @@ bool FlightCore::djiDisarmMotor(){
 bool
 FlightCore::djiShootPhoto(){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR(__FILE__,__LINE__,"Camera not mount.");		
+		DWAR(__FILE__,__LINE__,"Camera not mount.",luaSocketPrintFd);		
 		return false;
 	}		
 	_vehicle->camera->shootPhoto();
@@ -809,7 +887,7 @@ FlightCore::djiShootPhoto(){
 bool 
 FlightCore::djiVideoStart(){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR(__FILE__,__LINE__,"Camera not mount.");		
+		DWAR(__FILE__,__LINE__,"Camera not mount.",luaSocketPrintFd);		
 		return false;
 	}	
 	_vehicle->camera->videoStart();
@@ -819,7 +897,7 @@ FlightCore::djiVideoStart(){
 bool 
 FlightCore::djiVideoStop(){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR(__FILE__,__LINE__,"Camera not mount.");		
+		DWAR(__FILE__,__LINE__,"Camera not mount.",luaSocketPrintFd);		
 		return false;
 	}
 	_vehicle->camera->videoStop();
@@ -846,7 +924,7 @@ FlightCore::djiCameraZoomBystep(int16_t times){
 bool	
 FlightCore::djiCameraZoom(uint16_t mode, int16_t value){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR(__FILE__,__LINE__,"Camera not mount.");
+		DWAR(__FILE__,__LINE__,"Camera not mount.",luaSocketPrintFd);
 		return false;
 	}
 	camera_zoom_data_type_t zoom_data;
@@ -864,7 +942,7 @@ FlightCore::djiCameraZoom(uint16_t mode, int16_t value){
 		zoom_data.optical_zoom_param.cont_param.zoom_cont_speed = (uint16_t)abs(value);
 		zoom_data.optical_zoom_param.cont_param.zoom_cont_direction = value>0? 1: 0;
 	}else{
-		DWAR(__FILE__,__LINE__,"Zoom mode err.");
+		DWAR(__FILE__,__LINE__,"Zoom mode err.",luaSocketPrintFd);
 		return false;	
 	}
 	djiCameraZoom(&zoom_data);
@@ -880,7 +958,7 @@ FlightCore::djiCameraZoom(const camera_zoom_data_type_t *zoom){
 bool
 FlightCore::djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR(__FILE__,__LINE__,"Gimbal not mount.");
+		DWAR(__FILE__,__LINE__,"Gimbal not mount.",luaSocketPrintFd);
 		return false;
 	}
 	
@@ -911,14 +989,14 @@ FlightCore::djiSetGimbalAngle(float roll_deg,float pitch_deg,float yaw_deg){
 		sleep(1);// waiting 5*1=5s for gimbal reache the target angle
 	}
 	if(startcount==5){
-		DWAR(__FILE__,__LINE__,"gimbal control Timeout.");		
+		DWAR(__FILE__,__LINE__,"gimbal control Timeout.",luaSocketPrintFd);		
 	}
 	return true;
 }
 bool	
 FlightCore::djiSetGImbalSpeed(float roll_rate,float pitch_rate,float yaw_rate){
 	if(_gimbal_status.mountStatus == 0){
-		DWAR(__FILE__,__LINE__,"Gimbal not mount.");		
+		DWAR(__FILE__,__LINE__,"Gimbal not mount.",luaSocketPrintFd);		
 		return false;
 	}	
 	DJI::OSDK::Gimbal::SpeedData gimbal_speed;

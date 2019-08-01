@@ -49,7 +49,6 @@ set(SRC_LISTS
 src/linux/LinuxHelpers.cpp
 src/linux/LinuxEnvironment.cpp
 src/dev/InterfaceSerial.cpp
-src/DJI_MAVlinkBrige.cpp
 src/utilize/geo.cpp
 src/utilize/Message.cpp
 src/LuaParser.cpp

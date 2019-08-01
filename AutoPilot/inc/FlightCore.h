@@ -16,6 +16,7 @@
 #include "dji_telemetry.hpp"
 #include "dji_status.hpp"
 #include "DjiCameraZoomType.h"
+#include "dji_vehicle_callback.hpp"
 
 #define MAX_SPEED_FACTOR 5.0
 #define MIN_SPEED_FACTOR 0.3
@@ -76,34 +77,41 @@ public:
 		
 private:
 		void readVehicleStatusThread();
+		static void PKGIndex_0_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
+		static void PKGIndex_1_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
+		static void PKGIndex_2_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
+		static void PKGIndex_3_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
+		static void PKGIndex_4_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
+		static void checkRCInterruptLuaRun();
 		/*pointer to Vehicle*/
 		static DJI::OSDK::Vehicle* _vehicle;
 
-		bool _vehicle_rtk_avilable;
-		TypeMap<TOPIC_STATUS_FLIGHT>::type 		_flightStatus;
-		TypeMap<TOPIC_STATUS_DISPLAYMODE>::type	_display_mode;
-		TypeMap<TOPIC_GPS_FUSED>::type 			_current_lat_lon;
-		TypeMap<TOPIC_GPS_DETAILS>::type 		_gps_details;
-		TypeMap<TOPIC_GPS_SIGNAL_LEVEL>::type 	_gps_signal_level;
-		TypeMap<TOPIC_HEIGHT_FUSION>::type 	_height_fusioned;
-		TypeMap<TOPIC_RC_FULL_RAW_DATA>::type 	_rc_full_raw_data;
-		TypeMap<TOPIC_RC>::type 				_rc_data;
-		TypeMap<TOPIC_VELOCITY>::type 			_velocity;
-		TypeMap<TOPIC_QUATERNION>::type 		_quaternion;
-		TypeMap<TOPIC_BATTERY_INFO>::type 		_battery_info;
-		TypeMap<TOPIC_RTK_POSITION>::type 		_rtk_pos;
-		TypeMap<TOPIC_RTK_POSITION_INFO>::type 	_rtk_pos_info;
-		TypeMap<TOPIC_RTK_VELOCITY>::type 		_rtk_velocity;
-		TypeMap<TOPIC_RTK_YAW>::type			_rtk_yaw;
-		TypeMap<TOPIC_RTK_YAW_INFO>::type		_rtk_yaw_info;
-		TypeMap<TOPIC_GIMBAL_ANGLES>::type		_gimbal_angle;
-		TypeMap<TOPIC_GIMBAL_STATUS>::type		_gimbal_status;
-		TypeMap<TOPIC_GIMBAL_CONTROL_MODE>::type		_gimbal_mode;
+		static bool _vehicle_rtk_avilable;
+		static TypeMap<TOPIC_STATUS_FLIGHT>::type 		_flightStatus;
+		static TypeMap<TOPIC_STATUS_DISPLAYMODE>::type	_display_mode;
+		static TypeMap<TOPIC_GPS_FUSED>::type 			_current_lat_lon;
+		static TypeMap<TOPIC_GPS_DETAILS>::type 		_gps_details;
+		static TypeMap<TOPIC_GPS_SIGNAL_LEVEL>::type 	_gps_signal_level;
+		static TypeMap<TOPIC_HEIGHT_FUSION>::type 	_height_fusioned;
+		static TypeMap<TOPIC_RC_FULL_RAW_DATA>::type 	_rc_full_raw_data;
+		static TypeMap<TOPIC_RC>::type 				_rc_data;
+		static TypeMap<TOPIC_RC_WITH_FLAG_DATA>::type 	_rc_witch_flag;
+		static TypeMap<TOPIC_VELOCITY>::type 			_velocity;
+		static TypeMap<TOPIC_QUATERNION>::type 		_quaternion;
+		static TypeMap<TOPIC_BATTERY_INFO>::type 		_battery_info;
+		static TypeMap<TOPIC_RTK_POSITION>::type 		_rtk_pos;
+		static TypeMap<TOPIC_RTK_POSITION_INFO>::type 	_rtk_pos_info;
+		static TypeMap<TOPIC_RTK_VELOCITY>::type 		_rtk_velocity;
+		static TypeMap<TOPIC_RTK_YAW>::type			_rtk_yaw;
+		static TypeMap<TOPIC_RTK_YAW_INFO>::type		_rtk_yaw_info;
+		static TypeMap<TOPIC_GIMBAL_ANGLES>::type		_gimbal_angle;
+		static TypeMap<TOPIC_GIMBAL_STATUS>::type		_gimbal_status;
+		static TypeMap<TOPIC_GIMBAL_CONTROL_MODE>::type		_gimbal_mode;
 
 		/*thread control */
 		std::thread* _dji_FC_link_thread=nullptr;
 		bool _thread_need_exit;
-		std::mutex *_vehicle_data_mutex=nullptr;
+		static std::mutex *_vehicle_data_mutex;
 
 		/*break auto control running flag*/
 		static bool _auto_running_need_break;

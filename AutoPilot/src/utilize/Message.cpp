@@ -1,11 +1,7 @@
 #include "Message.h"
 void DWAR(std::string warn_file,int line ,std::string msg,int fd){														
 	std::string warn_message="[WAR]"+warn_file+": "+std::to_string(line)+": "+ msg;
-	if(fd == -1){
-		std::cout<<warn_message<<std::endl;	
-	}else{
-		send(fd,warn_message.c_str(),warn_message.size(),0);	
-	}
+	NOTICE_MSG(fd,warn_message);
 	FlightLog::writeLogBuffer(warn_message);																
 }
 void NOTICE_MSG(int fd,std::string msg){
