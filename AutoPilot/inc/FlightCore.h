@@ -111,7 +111,7 @@ private:
 		/*thread control */
 		std::thread* _dji_FC_link_thread=nullptr;
 		bool _thread_need_exit;
-		static std::mutex *_vehicle_data_mutex;
+		static std::mutex _vehicle_data_mutex;
 
 		/*break auto control running flag*/
 		static bool _auto_running_need_break;

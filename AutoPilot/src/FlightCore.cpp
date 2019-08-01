@@ -16,8 +16,8 @@
 //init static var
 bool FlightCore::_auto_running_need_break=false;
 DJI::OSDK::Vehicle* FlightCore::_vehicle=nullptr;
-std::mutex* FlightCore::_vehicle_data_mutex=nullptr;
-bool FlightCore::_vehicle_rtk_avilable;
+std::mutex FlightCore::_vehicle_data_mutex;
+bool FlightCore::_vehicle_rtk_avilable=false;
 TypeMap<TOPIC_STATUS_FLIGHT>::type 		FlightCore::_flightStatus;
 TypeMap<TOPIC_STATUS_DISPLAYMODE>::type	FlightCore::_display_mode;
 TypeMap<TOPIC_GPS_FUSED>::type 			FlightCore::_current_lat_lon;
@@ -54,10 +54,6 @@ void FlightCore::exitDjiThread(){
 		_dji_FC_link_thread->join();
 		delete _dji_FC_link_thread;
 		_dji_FC_link_thread=nullptr;
-	}
-	if(_vehicle_data_mutex != nullptr){
-		delete _vehicle_data_mutex;
-		_vehicle_data_mutex=nullptr;
 	}
 	// release ctr authority
 	djiReleaseControlAuthority();
@@ -258,24 +254,24 @@ bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
 	/*register a callback for pkg index 4*/
 	_vehicle->subscribe->registerUserPackageUnpackCallback(4,FlightCore::PKGIndex_4_Callback);
 	
+	//checke if thread is running
 	exitDjiThread();
-	//creat a new mutex 
-	_vehicle_data_mutex=new std::mutex();
-	//creat a new thread for swap data for FC
+	//creat a new thread for use the fc data
 	_dji_FC_link_thread=new std::thread(&FlightCore::readVehicleStatusThread,this);
+
 	return true;
 }
 void FlightCore::PKGIndex_0_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	_flightStatus 		= vehicle->subscribe->getValue<TOPIC_STATUS_FLIGHT>();
 	_display_mode		= vehicle->subscribe->getValue<TOPIC_STATUS_DISPLAYMODE>(); 
 	_battery_info		= vehicle->subscribe->getValue<TOPIC_BATTERY_INFO>();
 	_gps_details		= vehicle->subscribe->getValue<TOPIC_GPS_DETAILS>();
 	//unlock the mutex		
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void FlightCore::PKGIndex_1_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	_current_lat_lon	= vehicle->subscribe->getValue<TOPIC_GPS_FUSED>();
 	_height_fusioned	= vehicle->subscribe->getValue<TOPIC_HEIGHT_FUSION>();
 	_gimbal_status		= vehicle->subscribe->getValue<TOPIC_GIMBAL_STATUS>();
@@ -285,32 +281,34 @@ void FlightCore::PKGIndex_1_Callback(Vehicle* vehicle,RecvContainer recvFrame,Us
 		_gimbal_mode	= vehicle->subscribe->getValue<TOPIC_GIMBAL_CONTROL_MODE>();
 	}
 	//unlock the mutex		
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void FlightCore::PKGIndex_2_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	_velocity			= vehicle->subscribe->getValue<TOPIC_VELOCITY>();
 	_gps_signal_level	= vehicle->subscribe->getValue<TOPIC_GPS_SIGNAL_LEVEL>();
 	_rc_full_raw_data	= vehicle->subscribe->getValue<TOPIC_RC_FULL_RAW_DATA>();
 	_rc_data			= vehicle->subscribe->getValue<TOPIC_RC>();
 	_rc_witch_flag	    = vehicle->subscribe->getValue<TOPIC_RC_WITH_FLAG_DATA>();
 	//unlock the mutex		
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void FlightCore::PKGIndex_3_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	_quaternion	  		=  vehicle->subscribe->getValue<TOPIC_QUATERNION>();
 	//unlock the mutex		
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 
 void FlightCore::PKGIndex_4_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData){
 	if(_vehicle_rtk_avilable){
+		_vehicle_data_mutex.lock();
 		_rtk_pos	  		= vehicle->subscribe->getValue<TOPIC_RTK_POSITION>();
 		_rtk_pos_info	  	= vehicle->subscribe->getValue<TOPIC_RTK_POSITION_INFO>();
 		_rtk_velocity	  	= vehicle->subscribe->getValue<TOPIC_RTK_VELOCITY>();
 		_rtk_yaw	  		= vehicle->subscribe->getValue<TOPIC_RTK_YAW>();
 		_rtk_yaw_info	  	= vehicle->subscribe->getValue<TOPIC_RTK_YAW_INFO>();
+		_vehicle_data_mutex.unlock();
 	}
 }
 void FlightCore::readVehicleStatusThread(){
@@ -318,7 +316,7 @@ void FlightCore::readVehicleStatusThread(){
 	//loop send flight status to mavlink
 	while(!_thread_need_exit){
 		//lock the mutex 
-		_vehicle_data_mutex->lock();
+		_vehicle_data_mutex.lock();
 		//check interrupt
 		checkRCInterruptLuaRun();
 		//send vehicle location msg by mavlink protocol
@@ -327,7 +325,7 @@ void FlightCore::readVehicleStatusThread(){
 		FLIGHTLOG("Location: "+std::to_string(_current_lat_lon.latitude*RAD2DEG)+","+std::to_string(_current_lat_lon.longitude*RAD2DEG)+","+std::to_string(_height_fusioned));
 		
 		//unlock the mutex		
-		_vehicle_data_mutex->unlock();
+		_vehicle_data_mutex.unlock();
 		usleep(50000); //sleep 50 ms
 	}
 	FLIGHTLOG("Exit flight core thread");
@@ -356,69 +354,69 @@ FlightCore::checkRCInterruptLuaRun(){
 }
 void 
 FlightCore::getFlightStatus(TypeMap<TOPIC_STATUS_FLIGHT>::type* flightStatus){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(flightStatus,&_flightStatus,sizeof(TypeMap<TOPIC_STATUS_FLIGHT>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void 
 FlightCore::getFlightBatteryInfo(TypeMap<TOPIC_BATTERY_INFO>::type* battery_info){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(battery_info,&_battery_info,sizeof(TypeMap<TOPIC_BATTERY_INFO>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void 
 FlightCore::getVehicleGPS(TypeMap<TOPIC_GPS_FUSED>::type* lat_lon){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(lat_lon,&_current_lat_lon,sizeof(TypeMap<TOPIC_GPS_FUSED>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void 
 FlightCore::getVehicleGpsSignalLevel(TypeMap<TOPIC_GPS_SIGNAL_LEVEL>::type* gps_signal){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(gps_signal,&_gps_signal_level,sizeof(TypeMap<TOPIC_GPS_SIGNAL_LEVEL>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void
 FlightCore::getVehicleAltitude(TypeMap<TOPIC_HEIGHT_FUSION>::type* height){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(height,&_height_fusioned,sizeof(TypeMap<TOPIC_HEIGHT_FUSION>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void 
 FlightCore::getVehicleGpsDetails(TypeMap<TOPIC_GPS_DETAILS>::type* gps_details){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(gps_details,&_gps_details,sizeof(TypeMap<TOPIC_GPS_DETAILS>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void 
 FlightCore::getVehicleVelocity(TypeMap<TOPIC_VELOCITY>::type* velocity){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(velocity,&_velocity,sizeof(TypeMap<TOPIC_VELOCITY>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void 
 FlightCore::getVehicleQuaternion(TypeMap<TOPIC_QUATERNION>::type* quaternion){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(quaternion,&_quaternion,sizeof(TypeMap<TOPIC_QUATERNION>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void 
 FlightCore::getVehicleDisplay(TypeMap<TOPIC_STATUS_DISPLAYMODE>::type*	display_mode){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(display_mode,&_display_mode,sizeof(TypeMap<TOPIC_STATUS_DISPLAYMODE>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void	
 FlightCore::getGimbalAngle(TypeMap<TOPIC_GIMBAL_ANGLES>::type	*gimbal_angle){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(gimbal_angle,&_gimbal_angle,sizeof(TypeMap<TOPIC_GIMBAL_ANGLES>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 void
 FlightCore::getGimbalStatus(TypeMap<TOPIC_GIMBAL_STATUS>::type* gimbal_status){
-	_vehicle_data_mutex->lock();
+	_vehicle_data_mutex.lock();
 	memcpy(gimbal_status,&_gimbal_status,sizeof(TypeMap<TOPIC_GIMBAL_STATUS>::type));
-	_vehicle_data_mutex->unlock();
+	_vehicle_data_mutex.unlock();
 }
 float 
 FlightCore::getVehicleBearing(){
