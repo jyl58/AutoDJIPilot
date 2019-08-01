@@ -3,7 +3,6 @@
 
 std::thread* MavlinkRouter::_mavlink_router_read_thread=nullptr;
 std::mutex*  MavlinkRouter::_mavlink_router_read_thread_mutex=nullptr;
-//FlightCore*  MavlinkRouter::_flight_core=nullptr;
 InterfaceSerial* MavlinkRouter::_mavlink_serial=nullptr;
 bool MavlinkRouter::_mavlink_thread_need_exit=false;
 struct ev_loop* MavlinkRouter::_mvalink_router_ev_loop=ev_default_loop(0);

@@ -19,8 +19,6 @@ public:
 	static void sendHeartbeat();
 	static void sendLocation(double lat,double lon,float relative_alt,float vx,float vy,float vz);
 	static void stopMAVlinkThread();
-	/* flight core*/
-	//static FlightCore* _flight_core;
 private:
 	static void mavlinkRouterReadThread();
 	static void mavlinkRouterSendThread();

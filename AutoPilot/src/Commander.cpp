@@ -71,6 +71,11 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		DERR("Creat linux setup instance err!");
 		exit(1);
 	}
+	// int flight mavlink router thread	
+	if (!MavlinkRouter::MavlinkRouterInit(_linux_setup->getMAVlinkDevPort().c_str(),_linux_setup->getMAVlinkDevPortBaudrate())){
+		DERR("Mavlink router init err!");
+		exit(1);	
+	}
 #ifdef OFFLINE_DEBUG
 #else		
 	int try_count=0;
@@ -104,11 +109,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	LuaInterface::_flight_core =_flight_core;
 	//MavlinkRouter::_flight_core=_flight_core;
 #endif
-    // int flight mavlink router thread	
-	if (!MavlinkRouter::MavlinkRouterInit(_linux_setup->getMAVlinkDevPort().c_str(),_linux_setup->getMAVlinkDevPortBaudrate())){
-		DERR("Mavlink router init err!");
-		exit(1);	
-	}
+    
 	//creat a consoler server for remote cmd 
 	_console_server=new ConsoleServer();
 	if(_console_server == nullptr){
