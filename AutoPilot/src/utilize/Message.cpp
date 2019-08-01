@@ -1,7 +1,7 @@
 #include "Message.h"
 void DWAR(std::string warn_file,int line ,std::string msg,int fd){
 														
-	std::string warn_message="[WAR]"+warn_file.substr(warn_file.find_last_of("/"))+": "+std::to_string(line)+": "+ msg;
+	std::string warn_message="[WAR]"+warn_file.substr(warn_file.find_last_of("/")+1)+": "+std::to_string(line)+": "+ msg;
 	NOTICE_MSG(fd,warn_message);
 	FlightLog::writeLogBuffer(warn_message);																
 }
