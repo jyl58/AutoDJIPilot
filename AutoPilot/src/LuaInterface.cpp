@@ -45,7 +45,7 @@ int LuaInterface::LuaTakeoff(lua_State* lua){
 	// write message to log buff
 	FLIGHTLOG("Run takeoff by lua script.");
 	if(!_flight_core->djiTakeoff()){
-		DWAR(__FILE__,__LINE__,"Runing takeoff err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Runing takeoff err.",SocketPrintFd);
 		lua_pushboolean(lua,LUA_FAIL);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
@@ -57,7 +57,7 @@ int LuaInterface::Lualand(lua_State* lua){
 	// write message to log buff
 	FLIGHTLOG("Run Land by lua script.");
 	if(!_flight_core->djiLanding()){
-		DWAR(__FILE__,__LINE__,"Runing land err. ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Runing land err. ",SocketPrintFd);
 		lua_pushboolean(lua,LUA_FAIL);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
@@ -69,7 +69,7 @@ int LuaInterface::LuaGoHome(lua_State* lua){
 	// write message to log buff
 	FLIGHTLOG("Run go home.");
 	if(!_flight_core->djiGoHome()){
-		DWAR(__FILE__,__LINE__,"Runing go home err. ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Runing go home err. ",SocketPrintFd);
 		lua_pushboolean(lua,LUA_FAIL);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
@@ -79,7 +79,7 @@ int LuaInterface::LuaGoHome(lua_State* lua){
 }
 int LuaInterface::LuaFlyByGPS(lua_State* lua){
 	if(lua_gettop(lua) != 2){
-		DWAR(__FILE__,__LINE__,"Param Need Latitude and longitude. ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Param Need Latitude and longitude. ",SocketPrintFd);
 		luaL_error(lua,"Param Need Latitude and longitude."); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -89,13 +89,13 @@ int LuaInterface::LuaFlyByGPS(lua_State* lua){
 	FLIGHTLOG("Move to GPS point:" +std::to_string(target_lat) + "," + std::to_string(target_lon));
 	//check the lat and long limit	
 	if((target_lat> 90 || target_lat < -90) || (target_lon > 180 || target_lon < -180)){
-		DWAR(__FILE__,__LINE__,"Latitude and longitude is out the range.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Latitude and longitude is out the range.",SocketPrintFd);
 		luaL_error(lua,"Latitude and longitude is out the range."); // interrupt run the script
 		return LUA_FAIL;
 	}
 	//do fly
 	if(!_flight_core->djiMoveByGPS(target_lat,target_lon)){
-		DWAR(__FILE__,__LINE__,"Runing move by gps err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Runing move by gps err.",SocketPrintFd);
 		lua_pushboolean(lua,LUA_FAIL);
 		luaL_error(lua,"Runing move by gps err."); // interrupt run the script
 		return LUA_FAIL;
@@ -105,7 +105,7 @@ int LuaInterface::LuaFlyByGPS(lua_State* lua){
 }
 int LuaInterface::LuaFlyByVelocity(lua_State* lua){
 	if(lua_gettop(lua) != 3){
-		DWAR(__FILE__,__LINE__,"Need vx,vy,vz.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Need vx,vy,vz.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -113,7 +113,7 @@ int LuaInterface::LuaFlyByVelocity(lua_State* lua){
 	double vy=luaL_checknumber(lua,2);// get the target vy
 	double vz=luaL_checknumber(lua,3);// get the target vz
 	if(!_flight_core->djiMoveByVelocity(vx,vy,vz)){
-		DWAR(__FILE__,__LINE__,"Runing move by velocity err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Runing move by velocity err.",SocketPrintFd);
 		lua_pushboolean(lua,LUA_FAIL);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
@@ -124,19 +124,19 @@ int LuaInterface::LuaFlyByVelocity(lua_State* lua){
 
 int LuaInterface::LuaFlyByBearingAndDistance(lua_State* lua){
 	if(lua_gettop(lua) != 2){
-		DWAR(__FILE__,__LINE__,"Need a bearing(deg)  and a distance(m) argument.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Need a bearing(deg)  and a distance(m) argument.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
 	float bearing=luaL_checknumber(lua,1);// get the target bearing uint:deg
 	float distance=luaL_checknumber(lua,2);// get the target distance
 	if(std::fabs(bearing)>180){
-		DWAR(__FILE__,__LINE__,"Target bearing is out the range.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Target bearing is out the range.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
 	if(!_flight_core->djiMoveByBearingAndDistance(bearing,distance)){
-		DWAR(__FILE__,__LINE__,"Running move by bearing and distance err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Running move by bearing and distance err.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -146,7 +146,7 @@ int LuaInterface::LuaFlyByBearingAndDistance(lua_State* lua){
 
 int LuaInterface::LuaTurnHead(lua_State* lua){
 	if(lua_gettop(lua) != 1){
-		DWAR(__FILE__,__LINE__,"Param need the target head(deg).",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Param need the target head(deg).",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -155,12 +155,12 @@ int LuaInterface::LuaTurnHead(lua_State* lua){
 	FLIGHTLOG("Turn head :" + std::to_string(target_head)+"deg.");
 	
 	if(std::fabs(target_head) > 180){
-		DWAR(__FILE__,__LINE__,"Target head is out the range",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Target head is out the range",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
 	if(!_flight_core->djiTurnHead(target_head)){
-		DWAR(__FILE__,__LINE__,"Runing turn head err. ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Runing turn head err. ",SocketPrintFd);
 		lua_pushboolean(lua,LUA_FAIL);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
@@ -171,7 +171,7 @@ int LuaInterface::LuaTurnHead(lua_State* lua){
 
 int LuaInterface::LuaClimbTo(lua_State* lua){
 	if(lua_gettop(lua) != 1){
-		DWAR(__FILE__,__LINE__,"Param need the target alt(m)",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Param need the target alt(m)",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -180,7 +180,7 @@ int LuaInterface::LuaClimbTo(lua_State* lua){
 	// write message to log buff
 	FLIGHTLOG("Climb To :" + std::to_string(target_alt)+"m.");
 	if(!_flight_core->djiMoveZToTarget(target_alt)){
-		DWAR(__FILE__,__LINE__,"Runing climb err. ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Runing climb err. ",SocketPrintFd);
 		lua_pushboolean(lua,LUA_FAIL);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
@@ -191,7 +191,7 @@ int LuaInterface::LuaClimbTo(lua_State* lua){
 }
 int LuaInterface::LuaClimbBy(lua_State* lua){
 	if(lua_gettop(lua) != 1){
-		DWAR(__FILE__,__LINE__,"Param need the target alt(m).",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Param need the target alt(m).",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -201,7 +201,7 @@ int LuaInterface::LuaClimbBy(lua_State* lua){
 	FLIGHTLOG("Climb By :" + std::to_string(target_alt)+"m.");
 
 	if(!_flight_core->djiMoveZByOffset(target_alt)){
-		DWAR(__FILE__,__LINE__,"Runing climb by err. ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Runing climb by err. ",SocketPrintFd);
 		lua_pushboolean(lua,LUA_FAIL);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
@@ -212,7 +212,7 @@ int LuaInterface::LuaClimbBy(lua_State* lua){
 }
 int LuaInterface::LuaDelay(lua_State* lua){
 	if(lua_gettop(lua) != 1){
-		DWAR(__FILE__,__LINE__,"LuaDelay need a time argument (ms). ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"LuaDelay need a time argument (ms). ",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -285,7 +285,7 @@ int LuaInterface::LuaCall(lua_State* lua){
 	// get the param count of LuaCall
 	int param_count=lua_gettop(lua);
 	if(param_count<1){
-		DWAR(__FILE__,__LINE__,"LuaCall  need at least one param for function name",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"LuaCall  need at least one param for function name",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -319,7 +319,7 @@ int LuaInterface::LuaCall(lua_State* lua){
 int LuaInterface::LuaShootPhoto(lua_State* lua){
 	FLIGHTLOG("Shoot Photo");
 	if(!_flight_core->djiShootPhoto()){
-		DWAR(__FILE__,__LINE__,"Shoot photo err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Shoot photo err.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -329,7 +329,7 @@ int LuaInterface::LuaShootPhoto(lua_State* lua){
 int LuaInterface::LuaVideoStart(lua_State* lua){
 	FLIGHTLOG("Start video");
 	if(!_flight_core->djiVideoStart()){
-		DWAR(__FILE__,__LINE__,"Start video err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Start video err.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -339,7 +339,7 @@ int LuaInterface::LuaVideoStart(lua_State* lua){
 int LuaInterface::LuaVideoStop(lua_State* lua){
 	FLIGHTLOG("Stop video");
 	if(!_flight_core->djiVideoStop()){
-		DWAR(__FILE__,__LINE__,"Stop video err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Stop video err.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -347,14 +347,14 @@ int LuaInterface::LuaVideoStop(lua_State* lua){
 }
 int LuaInterface::LuaCameraZoom(lua_State* lua){
 	if(lua_gettop(lua) != 2){
-		DWAR(__FILE__,__LINE__,"Need mode and value 2 argument (deg). ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Need mode and value 2 argument (deg). ",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
 	int mode=luaL_checkinteger(lua,1); //get control mode
 	int value=luaL_checkinteger(lua,2); //get control value
 	if(!_flight_core->djiCameraZoom(mode,value)){
-		DWAR(__FILE__,__LINE__,"Camera zoom err. ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Camera zoom err. ",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -363,7 +363,7 @@ int LuaInterface::LuaCameraZoom(lua_State* lua){
 int 
 LuaInterface::LuaSetGimbalAngle(lua_State* lua){
 	if(lua_gettop(lua) != 3){
-		DWAR(__FILE__,__LINE__,"Need roll,pitch,yaw 3 argument (deg). ",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Need roll,pitch,yaw 3 argument (deg). ",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -371,19 +371,19 @@ LuaInterface::LuaSetGimbalAngle(lua_State* lua){
 	float pitch_deg=luaL_checknumber(lua,2);
 	float yaw_deg=luaL_checknumber(lua,3);
 	if(fabs(yaw_deg)>320){
-		DWAR(__FILE__,__LINE__,"desire Yaw angle is out of limit",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"desire Yaw angle is out of limit",SocketPrintFd);
 		yaw_deg=yaw_deg>0? 320:-320;
 	}
 	if( fabs(roll_deg)>35){
-		DWAR(__FILE__,__LINE__,"desire Roll angle is out of limit",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"desire Roll angle is out of limit",SocketPrintFd);
 		yaw_deg=roll_deg>0? 35:-35;
 	}
 	if(pitch_deg<-90 || pitch_deg>30){
-		DWAR(__FILE__,__LINE__,"desire Pitch angle is out of limit",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"desire Pitch angle is out of limit",SocketPrintFd);
 		yaw_deg=pitch_deg>0? 30:-90;
 	}
 	if(!_flight_core->djiSetGimbalAngle(roll_deg,pitch_deg,yaw_deg)){
-		DWAR(__FILE__,__LINE__,"Set gimbal angle err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Set gimbal angle err.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;	
 	}
@@ -407,7 +407,7 @@ int
 LuaInterface::LuaTestMotor(lua_State* lua){
 	FLIGHTLOG("Start test motor.");
 	if(!_flight_core->djiArmMotor()){
-		DWAR(__FILE__,__LINE__,"Start motor err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Start motor err.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}
@@ -417,7 +417,7 @@ LuaInterface::LuaTestMotor(lua_State* lua){
 		sleep(1); //wating 10*1=10s
 	}
 	if(!_flight_core->djiDisarmMotor()){
-		DWAR(__FILE__,__LINE__,"Stop motor err.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Stop motor err.",SocketPrintFd);
 		lua_error(lua); // interrupt run the script
 		return LUA_FAIL;
 	}

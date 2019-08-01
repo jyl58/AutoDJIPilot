@@ -10,6 +10,12 @@
 #include <fstream>
 #include <sstream>
 #include "Commander.h"
+#include "Message.h"
+/*
+*	global var for message print function std::cout or socket fd
+*	pre set the printfd to -1 for std::cout
+*/
+int SocketPrintFd=-1;
 //app logo
 const std::string AutoDjiLogo="DJI_Auto>";
 
@@ -18,6 +24,7 @@ bool main_thread_need_exit=false;
 *	system entry function
 */
 int main(int argc, char** argv){
+	//init commander system
 	Commander::AutopilotSystemInit(argv[1]);
 	
 	std::string input;	

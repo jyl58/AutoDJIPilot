@@ -12,12 +12,12 @@
 #include <stdio.h>
 #include <sys/socket.h>
 //lua print for socket fd
-extern int luaSocketPrintFd;
+extern int SocketPrintFd;
 
 #define lua_writestring(s,l) 								\
 	{														\
-		if(luaSocketPrintFd != -1){							\
-			send(luaSocketPrintFd,s,l,0);					\
+		if(SocketPrintFd != -1){							\
+			send(SocketPrintFd,s,l,0);					    \
 		}else{												\
 			fwrite((s),sizeof(char),(l),stdout);			\
 			fflush(stdout);									\

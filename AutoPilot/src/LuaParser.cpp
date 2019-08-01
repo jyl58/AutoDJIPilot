@@ -9,8 +9,6 @@
 #include <iostream>
 #include "LuaParser.h"
 #include "Message.h"
-//global var for lua print function
-int luaSocketPrintFd;
 
 std::thread* LuaParser::_lua_script_run_thread=nullptr;
 lua_State* LuaParser::_lua=nullptr;
@@ -80,23 +78,21 @@ bool LuaParser::LuaParserInit(){
 *open the lua script and run in another thread
 *param: lua file name path
 */
-bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,int pint_fd,bool need_new_thread){
-	//set lua print fd handler to std::cout or socket fd
-	luaSocketPrintFd=pint_fd;
+bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool need_new_thread){
 	//check 1: lua file path valid
 	if(lua_file_name_path.empty()){
-		DWAR(__FILE__,__LINE__,"Lua script path is empty.",pint_fd);
+		DWAR(__FILE__,__LINE__,"Lua script path is empty.",SocketPrintFd);
 		return false;
 	}
 	// check 2: if there is a thread running  
 	if(_lua_script_thread_running){
-		DWAR(__FILE__,__LINE__,"A lua script thread is running,please waiting or break it.",luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"A lua script thread is running,please waiting or break it.",SocketPrintFd);
 		return false;
 	}
 	//check 3: the lua parser healthy
 	int err_code=lua_status(_lua);		
 	if( err_code != LUA_OK){
-		DWAR(__FILE__,__LINE__,"Lua status is not OK,err code: "+std::to_string(err_code),luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Lua status is not OK,err code: "+std::to_string(err_code),SocketPrintFd);
 		return false;
 	}
 	// clear the all interrupt hook before run the lua script
@@ -104,7 +100,7 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,int pi
 	//load lua script frome file
 	err_code=luaL_loadfile(_lua,lua_file_name_path.c_str());
 	if ( err_code != LUA_OK){
-		DWAR(__FILE__,__LINE__,"Loading lua script file err,err code: "+ std::to_string(err_code),luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Loading lua script file err,err code: "+ std::to_string(err_code),SocketPrintFd);
 		return false;
 	}
 	if(need_new_thread){
@@ -120,7 +116,7 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,int pi
 		FlightCore::djiNeedBreakAutoControl(false);
 		// get flight core ctr authority
 		if(!FlightCore::djiGetControlAuthority()){
-			DWAR(__FILE__,__LINE__,"Lua thread get ctr authority err.",luaSocketPrintFd);	
+			DWAR(__FILE__,__LINE__,"Lua thread get ctr authority err.",SocketPrintFd);	
 			return false;
 		}
 #endif
@@ -139,7 +135,7 @@ LuaParser::LuaParserRunThread(){
 	FLIGHTLOG("The Lua script start Running... ");
 	int err_code=lua_pcall(_lua,0,0,0);
 	if(err_code != LUA_OK){
-		DWAR(__FILE__,__LINE__,"Run lua script err,err code: "+ std::to_string(err_code),luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Run lua script err,err code: "+ std::to_string(err_code),SocketPrintFd);
 	}else{
 		FLIGHTLOG("The lua script run Complete.");
 	}
@@ -149,18 +145,18 @@ LuaParser::LuaParserRunThread(){
 #ifdef OFFLINE_DEBUG
 #else
 		if(!FlightCore::djiReleaseControlAuthority()){
-			DWAR(__FILE__,__LINE__,"Lua thread release ctr authority err.",luaSocketPrintFd);
+			DWAR(__FILE__,__LINE__,"Lua thread release ctr authority err.",SocketPrintFd);
 		}
 #endif
 	}
 	//run finished  output the logo 
-	LOGO(luaSocketPrintFd,AutoDjiLogo);
+	LOGO(SocketPrintFd,AutoDjiLogo);
 }
 
 void 
 LuaParser::LuaInterruptRuning(const std::string& reason){
 	if(_lua_script_thread_running){
-		DWAR(__FILE__,__LINE__,"Break lua script : "+reason,luaSocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Break lua script : "+reason,SocketPrintFd);
 		// set lua debug hook for stop
 		lua_sethook(_lua,&LuaInterface::LuaStop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
 		// break while loop in the flight core class 

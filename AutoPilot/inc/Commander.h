@@ -22,14 +22,13 @@
 #include "MavlinkRouter.h"
 #include "FlightLog.h"
 #include "LuaInterface.h"
-#include "Message.h"
 #include "PayloadBase.h"
 #include "ConsoleServer.h"
 #include "linux/LinuxHelpers.hpp"
 #include "geo.h"
 
 #define DEFAULT_LUA_DIRECTORY "/usr/local/share/AutoDjiPilot/"
-typedef void (*cmdfunction)(int);
+typedef void (*cmdfunction)();
 typedef struct CMDFUNCTION{
 	char cmd_name[10];
 	cmdfunction cmd_function;
@@ -47,19 +46,19 @@ public:
 	static bool tcp_link_need_disconnect;
 
 private:
-	static void HelpCommandCMD(int print_fd=-1);
-	static void ZoomCamera(int print_fd=-1);
-	static void	LoadPayloadPlugin(int print_fd=-1);
-	static void RunLuaScript(int print_fd=-1);
-	static void PauseRunLuaScript(int print_fd=-1);
-	static void GoOnRunLuaScript(int print_fd=-1);
-	static void BreakRunLuaScript(int print_fd=-1);
-	static void SetGimbal(int print_fd=-1);
-	static void RunVideo(int print_fd=-1);
-	static void ShootPhoto(int print_fd=-1);
-	static void PrintConfigMsgCMD(int print_fd=-1);
-	static void PrintFlightStatusCMD(int print_fd=-1);
-	static void ExitSystemCMD(int print_fd=-1);
+	static void HelpCommandCMD();
+	static void ZoomCamera();
+	static void	LoadPayloadPlugin();
+	static void RunLuaScript();
+	static void PauseRunLuaScript();
+	static void GoOnRunLuaScript();
+	static void BreakRunLuaScript();
+	static void SetGimbal();
+	static void RunVideo();
+	static void ShootPhoto();
+	static void PrintConfigMsgCMD();
+	static void PrintFlightStatusCMD();
+	static void ExitSystemCMD();
 	
 	static ConsoleServer* _console_server;	
 	static LinuxSetup* _linux_setup;

@@ -14,6 +14,7 @@
 #include <netinet/in.h>
 #include "ConsoleServer.h"
 #include "Commander.h"
+#include "Message.h"
 #include "EventManage.h"
 
 ev_io ConsoleServer::_tcp_listen;
@@ -120,12 +121,12 @@ ConsoleServer::tCPAcceptCallback(struct ev_loop* main_loop, ev_io* sock_w,int ev
 	}
 	//creat a new socket connect
 	socket_connect_t* temp_connect=new socket_connect_t;
-	// append to list
+	//append to list
 	_connect_list.push_back(temp_connect);
 	//record the index in the io_list
 	temp_connect->index=(_connect_list.size()-1);
 	temp_connect->_tcp_talk.data=temp_connect;
-	// init new event read client cmd
+	//init new event read client cmd
 	ev_io_init(&temp_connect->_tcp_talk,ConsoleServer::tCPRead,link_fd,EV_READ);
 	ev_io_start(main_loop,&temp_connect->_tcp_talk);
 	//send logo
