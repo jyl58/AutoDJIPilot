@@ -35,6 +35,7 @@ public:
 	/*get value from lua script by name*/	
 	bool LuaGettableValueByName(const char* table_name,const  char* value_name, std::string& value);
 	/*run the lua hook function set by other thread*/
+	static void checkInterruptCmd();
 	
 private:
 	/*lua run thread*/

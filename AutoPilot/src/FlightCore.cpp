@@ -654,7 +654,7 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 		float y_speed_factor=0;
 		// FLY MODE flags
 		uint8_t ctrl_flag = Control::HORIZONTAL_POSITION | Control::HORIZONTAL_GROUND | Control::VERTICAL_POSITION |Control::YAW_ANGLE | Control::STABLE_ENABLE;		
-		do{
+		while(true){
 			//get the new local pos
 			getVehicleGPS(&current_lat_lon);
 			//
@@ -669,11 +669,12 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 				break;
 			}
 			//flight interrupt by ext
-			if(_auto_running_need_break){
+			/*if(_auto_running_need_break){
 				_auto_running_need_break=false;
 				FLIGHTLOG("Move X_Y by offset is breaked.");			
 				return false;	
-			}
+			}*/
+			LuaParser::checkInterruptCmd();
 			//distance to target point,
 			float distance = sqrtf(powf(x_offset_remaing,2)+powf(y_offset_remaing,2));
 			float v_factor = distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY;
@@ -696,7 +697,7 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
 			_vehicle->control->flightCtrl(data);
 			usleep(20000);  //20ms
-		}while(!_auto_running_need_break);
+		}
 		
 		// do a emergencyBrake 
 		_vehicle->control->emergencyBrake();

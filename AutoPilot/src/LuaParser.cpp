@@ -152,7 +152,13 @@ LuaParser::LuaParserRunThread(){
 	//run finished  output the logo 
 	LOGO(SocketPrintFd,AutoDjiLogo);
 }
-
+void 
+LuaParser::checkInterruptCmd(){
+	lua_Hook hook=lua_gethook(_lua);
+	if( hook!= NULL){
+		hook(_lua,NULL);
+	}
+}
 void 
 LuaParser::LuaInterruptRuning(const std::string& reason){
 	if(_lua_script_thread_running){
