@@ -112,8 +112,6 @@ bool LuaParser::LuaScriptOpenAndRun(const std::string &lua_file_name_path,bool n
 		}
 #ifdef OFFLINE_DEBUG
 #else		
-		// clear the while loop break flag in flight core class before run the lua script
-		FlightCore::djiNeedBreakAutoControl(false);
 		// get flight core ctr authority
 		if(!FlightCore::djiGetControlAuthority()){
 			DWAR(__FILE__,__LINE__,"Lua thread get ctr authority err.",SocketPrintFd);	
@@ -153,7 +151,7 @@ LuaParser::LuaParserRunThread(){
 	LOGO(SocketPrintFd,AutoDjiLogo);
 }
 void 
-LuaParser::checkInterruptCmd(){
+LuaParser::runLuaHookFunction(){
 	lua_Hook hook=lua_gethook(_lua);
 	if( hook!= NULL){
 		hook(_lua,NULL);
@@ -165,8 +163,6 @@ LuaParser::LuaInterruptRuning(const std::string& reason){
 		DWAR(__FILE__,__LINE__,"Break lua script : "+reason,SocketPrintFd);
 		// set lua debug hook for stop
 		lua_sethook(_lua,&LuaInterface::LuaStop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
-		// break while loop in the flight core class 
-		FlightCore::djiNeedBreakAutoControl(true);
 		//if in pause mode then,force exit the pause 
 		LuaInterface::_need_go_on_run=true;
 	}

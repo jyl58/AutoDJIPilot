@@ -15,7 +15,6 @@
 #include "dji_control.hpp"
 #include "Message.h"
 //init static var
-bool FlightCore::_auto_running_need_break=false;
 DJI::OSDK::Vehicle* FlightCore::_vehicle=nullptr;
 std::mutex FlightCore::_vehicle_data_mutex;
 bool FlightCore::_vehicle_rtk_avilable=false;
@@ -591,19 +590,17 @@ bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in
 		zcmd =task_startAltitude + target_alt_m;
 		// FLY MODE flags
 		uint8_t ctrl_flag = Control::VERTICAL_POSITION;
-		while(!_auto_running_need_break){
-				Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
-				_vehicle->control->flightCtrl(data);
-				usleep(20000);  //20ms
-				float z_offset_remaing=_height_fusioned-task_startAltitude;
-				//check the alt is reache 
-				if(std::fabs(target_alt_m - z_offset_remaing)< vertical_threshold_in_m)
-					break;
-		}
-		if(_auto_running_need_break){
-			_auto_running_need_break=false;
-			FLIGHTLOG("Move Z by offset is breaked.");			
-			return false;	
+		while(true){
+			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
+			_vehicle->control->flightCtrl(data);
+			usleep(20000);  //20ms
+			float z_offset_remaing=_height_fusioned-task_startAltitude;
+			//check the alt is reache 
+			if(std::fabs(target_alt_m - z_offset_remaing)< vertical_threshold_in_m){
+				break;
+			}
+			//run hook function
+			LuaParser::runLuaHookFunction();
 		}
 	}else{
 	//TODO: add m100 and m600 process
@@ -668,13 +665,9 @@ bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float po
 			   (std::fabs(y_offset_remaing)< pos_threshold_in_m)){
 				break;
 			}
-			//flight interrupt by ext
-			/*if(_auto_running_need_break){
-				_auto_running_need_break=false;
-				FLIGHTLOG("Move X_Y by offset is breaked.");			
-				return false;	
-			}*/
-			LuaParser::checkInterruptCmd();
+			//run hook function
+			LuaParser::runLuaHookFunction();
+			
 			//distance to target point,
 			float distance = sqrtf(powf(x_offset_remaing,2)+powf(y_offset_remaing,2));
 			float v_factor = distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY;
@@ -746,7 +739,7 @@ bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 		float zcmd=_height_fusioned;
 		// FLY MODE flags <note>: this need z control or alt maybe change ,because turn head 
 		uint8_t ctrl_flag = Control::YAW_ANGLE | Control::VERTICAL_POSITION;
-		while(!_auto_running_need_break){
+		while(true){
 			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,target_head_deg);
 			_vehicle->control->flightCtrl(data);
 			usleep(20000);  //20ms
@@ -755,11 +748,8 @@ bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
 			if(std::fabs(current_yaw_in_rad*RAD2DEG-target_head_deg) < yaw_threshold_in_deg){
 				break;	
 			}
-			if(_auto_running_need_break){
-				_auto_running_need_break=false;
-				FLIGHTLOG("Trun head is breaked.");			
-				return false;	
-			}
+			//run hook function
+			LuaParser::runLuaHookFunction();
 		}
 	}else{
 		//TODO: add m100 and m600
@@ -790,7 +780,7 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 		float z_speed_factor=0;
 		double yaw_threshold_in_rad	=	DEG2RAD * yaw_threshold_in_deg;
 		double yaw_desired_rad      =   DEG2RAD * yaw_Desired;
-		do{ 		
+		while(true){ 		
 			localOffsetFromGPSOffset(localoffset, static_cast<void*>(&_current_lat_lon), static_cast<void*>(&task_startPoint));
 			localoffset.z=_height_fusioned-task_startAltitude;
 			//get the initial offset we will update in loop		
@@ -806,12 +796,9 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 			   std::fabs(yaw_in_rad-yaw_desired_rad) < yaw_threshold_in_rad){
 				break;
 			}
-			//check interrupt command
-			if(_auto_running_need_break){
-				_auto_running_need_break=false;
-				FLIGHTLOG("Move X,Y,Z,yaw by offset is breaked.");			
-				return false;	
-			}
+			//run hook function
+			LuaParser::runLuaHookFunction();
+			
 			float distance=sqrtf(powf(x_offset_remaing,2) + powf(y_offset_remaing,2) + powf(z_offset_remaing,2));
 			float v_factor=distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY;
 			if(v_factor < MIN_SPEED_FACTOR){
@@ -833,7 +820,7 @@ bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desire
 			//send the control cmd to vehicle fc
 			_vehicle->control->positionAndYawCtrl(xcmd,ycmd,zcmd,yaw_Desired);			
 			usleep(20000);  //20ms
-		}while(!_auto_running_need_break);
+		}
 		// do a emergencyBrake 
 		_vehicle->control->emergencyBrake();		
 	}else{
