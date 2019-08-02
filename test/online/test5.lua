@@ -7,7 +7,7 @@ LuaClimbTo(10)
 LuaTurnHead(0)
 LuaClimbBy(-5)
 print("at target alt")
---LuaFlyByGPS(36.5429,120.9579)
+
 
 LuaGoHome()
 
