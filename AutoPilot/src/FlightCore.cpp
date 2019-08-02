@@ -14,7 +14,6 @@
 #include "geo.h"
 #include "dji_control.hpp"
 #include "Message.h"
-#include "tools.h"
 //init static var
 bool FlightCore::_auto_running_need_break=false;
 DJI::OSDK::Vehicle* FlightCore::_vehicle=nullptr;
@@ -324,9 +323,9 @@ void FlightCore::readVehicleStatusThread(){
 		//send vehicle location msg by mavlink protocol
 		MavlinkRouter::sendLocation(_current_lat_lon.latitude*RAD2DEG,_current_lat_lon.longitude*RAD2DEG,_height_fusioned,_velocity.data.x,_velocity.data.y,_velocity.data.z);
 		//write vehicle location to log file
-		FLIGHTLOG("Location: "+ Tools::ToString<double>((double)_current_lat_lon.latitude*RAD2DEG,7)+","+
-							    Tools::ToString<double>((double)_current_lat_lon.longitude*RAD2DEG,7)+","+
-							    Tools::ToString<float>(_height_fusioned,3));
+		FLIGHTLOG("Location: "+ std::to_string(1E7*_current_lat_lon.latitude*RAD2DEG)+","+
+							    std::to_string(1E7*_current_lat_lon.longitude*RAD2DEG)+","+
+							    std::to_string(1E3*_height_fusioned));
 		
 		//unlock the mutex		
 		_vehicle_data_mutex.unlock();
