@@ -34,6 +34,7 @@ public:
 	bool LuaGettableValueByIndex(const char* table_name,int index,std::string& value);
 	/*get value from lua script by name*/	
 	bool LuaGettableValueByName(const char* table_name,const  char* value_name, std::string& value);
+	/*run the lua hook function set by other thread*/
 	
 private:
 	/*lua run thread*/

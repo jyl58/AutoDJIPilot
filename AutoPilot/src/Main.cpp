@@ -33,13 +33,10 @@ int main(int argc, char** argv){
 	while(!Commander::main_thread_need_exit){
 		//clear input		
 		input.clear();
-		//clear std::cin buffer
-		std::cin.ignore(std::numeric_limits<std::streamsize>::max());
 		//get string  form stand input
 		getline(std::cin,input); // read a line input include space
 		if(input.empty()){
 			std::cout<<AutoDjiLogo;	
-			usleep(100000);//100ms
 			continue;
 		}
 		//split cmd and param
