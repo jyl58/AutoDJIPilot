@@ -25,10 +25,17 @@
 
 using namespace DJI::OSDK;
 using namespace DJI::OSDK::Telemetry;
+typedef void (*function)(void);
+struct PERIOD_CALL_LOOP{
+	function _func;
+	int      _call_freq;
+};
 class FlightCore{
 public:
 		FlightCore();
-		~FlightCore();
+		FlightCore(const FlightCore&)=delete;
+		FlightCore& operator=(const FlightCore&)=delete;
+		virtual ~FlightCore();
 		bool 	flightCoreInit(DJI::OSDK::Vehicle* vehicle);
 		void 	exitDjiThread();
 		/*get vehicle flight data*/
@@ -46,18 +53,21 @@ public:
 		void	getGimbalStatus(TypeMap<TOPIC_GIMBAL_STATUS>::type* gimbal_status);
 		uint8_t	getGimbalMode(){return _gimbal_mode;}
 		/* control vehicle flight*/
-		bool 	djiTakeoff();
-		bool 	djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desired ,float z_offset_Desired, float yaw_Desired,float pos_threshold_in_m=0.2,float yaw_threshold_in_deg=1.0);
-		bool 	djiMoveByGPS(double target_lat_deg,double target_lon_deg);
-		bool 	djiMoveX_YByOffset(float target_x_m,float target_y_m,float pos_threshold_in_m=0.5);
-		bool	djiMoveByBearingAndDistance(float bearing,float distance);
-		bool 	djiMoveZByOffset(float target_alt_m,float vertical_threshold_in_m=0.5);
-		bool 	djiMoveZToTarget(float target_alt_m);
-		bool 	djiMoveByVelocity(float vx,float vy,float vz);
-		bool 	djiHover();
-		bool 	djiTurnHead(float target_head_deg,float yaw_threshold_in_deg=1.0);
-		bool 	djiLanding();
-		bool 	djiGoHome();
+		virtual bool 	djiTakeoff(){return false;}
+		virtual bool 	djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desired ,
+										   float z_offset_Desired, float yaw_Desired,
+										   float pos_threshold_in_m=0.2,float yaw_threshold_in_deg=1.0)
+										   {return false;}
+		virtual bool 	djiMoveByGPS(double target_lat_deg,double target_lon_deg) {return false;}
+		virtual bool 	djiMoveX_YByOffset(float target_x_m,float target_y_m,float pos_threshold_in_m=0.5){return false;}
+		virtual bool	djiMoveByBearingAndDistance(float bearing,float distance){return false;}
+		virtual bool 	djiMoveZByOffset(float target_alt_m,float vertical_threshold_in_m=0.5){return false;}
+		virtual bool 	djiMoveZToTarget(float target_alt_m){return false;}
+		virtual bool 	djiMoveByVelocity(float vx,float vy,float vz){return false;}
+		virtual bool 	djiHover(){return false;}
+		virtual bool 	djiTurnHead(float target_head_deg,float yaw_threshold_in_deg=1.0){return false;}
+		virtual bool 	djiLanding(){return false;}
+		virtual bool 	djiGoHome(){return false;}
 		bool 	djiArmMotor();
 		bool 	djiDisarmMotor();
 		bool	djiShootPhoto();
@@ -73,8 +83,12 @@ public:
 		static bool	djiGetControlAuthority();
 		static bool	djiReleaseControlAuthority();
 		
-private:
+protected:
 		void readVehicleStatusThread();
+		void periodFunctionScheduler();
+		static void sendVehicleLocation();
+		static void sendBatteryInfo();
+		static void logLocation();
 		static void PKGIndex_0_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
 		static void PKGIndex_1_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
 		static void PKGIndex_2_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
@@ -83,7 +97,10 @@ private:
 		static void checkRCInterruptLuaRun();
 		/*pointer to Vehicle*/
 		static DJI::OSDK::Vehicle* _vehicle;
-
+		
+		static const struct PERIOD_CALL_LOOP _period_call_tabe[];
+		double* _last_run_time;
+		
 		static bool _vehicle_rtk_avilable;
 		static TypeMap<TOPIC_STATUS_FLIGHT>::type 		_flightStatus;
 		static TypeMap<TOPIC_STATUS_DISPLAYMODE>::type	_display_mode;

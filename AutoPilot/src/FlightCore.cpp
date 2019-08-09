@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <sys/time.h>
 #include "FlightCore.h"
 #include "MavlinkRouter.h"
 #include "LuaParser.h"
@@ -38,7 +39,11 @@ TypeMap<TOPIC_RTK_YAW_INFO>::type		FlightCore::_rtk_yaw_info;
 TypeMap<TOPIC_GIMBAL_ANGLES>::type		FlightCore::_gimbal_angle;
 TypeMap<TOPIC_GIMBAL_STATUS>::type		FlightCore::_gimbal_status;
 TypeMap<TOPIC_GIMBAL_CONTROL_MODE>::type	FlightCore::_gimbal_mode;
-
+const struct PERIOD_CALL_LOOP FlightCore::_period_call_tabe[]={
+	{FlightCore::sendVehicleLocation,10},
+	{FlightCore::sendBatteryInfo,3},
+	{FlightCore::logLocation,10}
+};
 FlightCore::FlightCore()
 :_thread_need_exit(false)
 {
@@ -314,27 +319,58 @@ void FlightCore::PKGIndex_4_Callback(Vehicle* vehicle,RecvContainer recvFrame,Us
 void FlightCore::readVehicleStatusThread(){
 	FLIGHTLOG("Start run flight core thread");
 	//loop send flight status to mavlink
+	//creat for run time record
+	_last_run_time=new double[sizeof(_period_call_tabe)/sizeof(_period_call_tabe[0])];
+	memset(_last_run_time,0,sizeof(_period_call_tabe)/sizeof(_period_call_tabe[0]));
 	while(!_thread_need_exit){
 		//lock the mutex 
 		_vehicle_data_mutex.lock();
 		//check interrupt
 		checkRCInterruptLuaRun();
-		//send vehicle location msg by mavlink protocol
-		MavlinkRouter::sendLocation(_current_lat_lon.latitude*RAD2DEG,_current_lat_lon.longitude*RAD2DEG,_height_fusioned,_velocity.data.x,_velocity.data.y,_velocity.data.z);
-		//write vehicle location to log file
-		FLIGHTLOG("Location: "+ std::to_string(1E7*_current_lat_lon.latitude*RAD2DEG)+","+
-							    std::to_string(1E7*_current_lat_lon.longitude*RAD2DEG)+","+
-							    std::to_string(1E3*_height_fusioned));
-		
+		//run the period function scheduler
+		periodFunctionScheduler();
+			
 		//unlock the mutex		
 		_vehicle_data_mutex.unlock();
-		usleep(50000); //sleep 50 ms
+		usleep(20000); //sleep 20 ms ~50hz
 	}
 	FLIGHTLOG("Exit flight core thread");
 	//remove the subscribe the package	
 	for (int i=0;i<MAX_PKG_COUNT;i++){
 		_vehicle->subscribe->removePackage(i,1);
 	}
+	//delete the newed heap
+	delete[] _last_run_time;
+}
+void 
+FlightCore::periodFunctionScheduler(){
+	struct timeval t;
+	gettimeofday(&t,NULL);
+	//ms
+	double _now=t.tv_sec*1000.0+t.tv_usec*0.001;
+	for(int i=0; i < sizeof(_period_call_tabe)/sizeof(_period_call_tabe[0]); i++){
+		if(_now - _last_run_time[i] >= 1000.0/_period_call_tabe[i]._call_freq){
+			//call period function
+			_period_call_tabe[i]._func();
+			_last_run_time[i]=_now;
+		}
+	}
+}
+void 
+FlightCore::sendVehicleLocation(){
+	//send vehicle location msg by mavlink protocol
+	MavlinkRouter::sendLocation(_current_lat_lon.latitude*RAD2DEG,_current_lat_lon.longitude*RAD2DEG,_height_fusioned,_velocity.data.x,_velocity.data.y,_velocity.data.z);
+}
+void 
+FlightCore::sendBatteryInfo(){
+
+}
+void 
+FlightCore::logLocation(){
+	//write vehicle location to log file
+	FLIGHTLOG("Location: "+ std::to_string(1E7*_current_lat_lon.latitude*RAD2DEG)+","+
+						    std::to_string(1E7*_current_lat_lon.longitude*RAD2DEG)+","+
+						    std::to_string(1E3*_height_fusioned));
 }
 void 
 FlightCore::checkRCInterruptLuaRun(){
@@ -425,422 +461,8 @@ FlightCore::getVehicleBearing(){
 	float current_head=	toEulerAngle(static_cast<void*>(&_quaternion)).z*RAD2DEG; //rad-->deg
 	return current_head;
 }
-/*@do a takeoff */
-bool 
-FlightCore::djiTakeoff(){
-	if(_flightStatus == VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running takeoff, but the vehicle is in air already",SocketPrintFd);
-		return true;
-	}
-	if(_gps_signal_level<3){
-		DWAR(__FILE__,__LINE__,"Takeoff need GPS signal level >=3.",SocketPrintFd);		
-		return false;
-	}
 
-	int timeout=1;
-	char func[50];
-	// send takeoff cmd
-	ACK::ErrorCode takeoffstatus = _vehicle->control->takeoff(timeout);
-	if(ACK::getError(takeoffstatus) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(takeoffstatus,func);
-		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"Send takeoff CMD err:"+errmsg,SocketPrintFd);		
-		return false;
-	}
-	/*First check: motor is start*/
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		int cmdstart=0;	
-		while(_flightStatus != VehicleStatus::FlightStatus::ON_GROUND && 
-			  _display_mode != VehicleStatus::DisplayMode::MODE_ENGINE_START&& 
-			  cmdstart<30){		
-			cmdstart++;
-			usleep(100000); //waiting 30*100ms=3s
-		}
-		if(cmdstart == 20){
-			DWAR(__FILE__,__LINE__,"Takeoff filed, Motors are not spining",SocketPrintFd);		
-			return false;
-		}
-	}else{
-	//TODO: add m600 and m100 process code
-	}
-	
-	/*Second check: vehicle is in air*/
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		int onground_count=0;	
-		//waitting 10 s	
-		while(_flightStatus != VehicleStatus::FlightStatus::IN_AIR &&
-			  (_display_mode != VehicleStatus::DisplayMode::MODE_ASSISTED_TAKEOFF || _display_mode != VehicleStatus::DisplayMode::MODE_AUTO_TAKEOFF)&& 
-			  onground_count<100 ){		
-			onground_count++;
-			usleep(100000);
-		}
-		if(onground_count == 100){
-			DWAR(__FILE__,__LINE__,"Takeoff filed, Vehicle is still on the ground,but motors is spin ",SocketPrintFd);		
-			return false;
-		}
-	}else{
-	//TODO: add m600 and m100 process code
-	}
 
-	/*Third check : takeoff finished*/ 
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		while(_display_mode == VehicleStatus::DisplayMode::MODE_ASSISTED_TAKEOFF ||
-			  _display_mode == VehicleStatus::DisplayMode::MODE_AUTO_TAKEOFF){		
-			sleep(1);
-		}
-		if(_display_mode != VehicleStatus::DisplayMode::MODE_P_GPS||
-		   _display_mode != VehicleStatus::DisplayMode::MODE_ATTITUDE){
-			//std::cout<<"Takeoff successful"<<"\n"<<std::endl;
-		}else{
-			DWAR(__FILE__,__LINE__,"Takeoff finished,but the vehicle is in an unexpected mode",SocketPrintFd);
-			return false;			
-		}
-	}else{
-	//TODO: add m600 and m100 process code
-	}
-	return true;
-}
-bool FlightCore::djiLanding(){
-	if(_flightStatus == VehicleStatus::FlightStatus::ON_GROUND){
-		DWAR(__FILE__,__LINE__,"Running landing ,but the the vehicle is on ground already",SocketPrintFd);	
-		return true;
-	}
-	int timeout=1;
-	char func[50];
-	ACK::ErrorCode landingStatus=_vehicle->control->land(timeout);
-	if(ACK::getError(landingStatus) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(landingStatus,func);
-		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"Send landing CMD err:"+errmsg,SocketPrintFd);		
-		return false;	
-	}
-	//first check landing stared
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		int landNoStart=0;
-		while(_display_mode !=  VehicleStatus::DisplayMode::MODE_AUTO_LANDING&&
-			  landNoStart<20){
-			landNoStart++;
-			usleep(100000); // 20*100000 waiting 2s
-		}
-		if(landNoStart==20){
-			return false;
-		}
-		//second check: finished landing
-		while(_display_mode == VehicleStatus::DisplayMode::MODE_AUTO_LANDING &&
-			  _flightStatus == VehicleStatus::FlightStatus::IN_AIR){
-				sleep(1);// waitting vehicle landed
-		}
-		if(_display_mode != VehicleStatus::DisplayMode::MODE_P_GPS||
-		   _display_mode != VehicleStatus::DisplayMode::MODE_ATTITUDE){
-			//std::cout<<"Landing successful"<<"\n"<<std::endl;
-		}
-	}else{
-		//TODO: add m100 and m600 process
-	}
-	return true;
-}
-bool FlightCore::djiGoHome(){
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running go home, but the vehicle is not in air.",SocketPrintFd);	
-		return false;
-	}
-	int timeout=1;
-	char func[50];
-	ACK::ErrorCode goHomeStatus= _vehicle->control->goHome(timeout);
-	if(ACK::getError(goHomeStatus) != ACK::SUCCESS){
-		ACK::getErrorCodeMessage(goHomeStatus,func);
-		std::string errmsg(func);
-		DWAR(__FILE__,__LINE__,"send go home CMD err:"+errmsg,SocketPrintFd);
-		return false;
-	}
-	//first check: start go home
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		int startGohome=0;		
-		while(_display_mode != VehicleStatus::DisplayMode::MODE_NAVI_GO_HOME&&
-			  startGohome<20){
-			 startGohome++;	
-			 usleep(100000); // 20*100000 waiting 2s	
-		}
-		if(startGohome == 20){
-			return false;		
-		}
-		//second check: finished go home
-		while(_display_mode == VehicleStatus::DisplayMode::MODE_NAVI_GO_HOME &&
-			  _flightStatus == VehicleStatus::FlightStatus::IN_AIR){
-				sleep(1);// waitting vehicle go home
-		}
-	}else{
-		//TODO: add m100 and m600 process
-	}
-	return true;
-}
-/*
-*	move vehicle by z offset. frame:NEU
-*	param target_alt: altitude offset. unit:m
-*/
-bool FlightCore::djiMoveZByOffset(float target_alt_m,float vertical_threshold_in_m){
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running move by z offset,but the vehicle is not in air.",SocketPrintFd);	
-		return false;
-	}
-	TypeMap<TOPIC_HEIGHT_FUSION>::type 	task_startAltitude=_height_fusioned;
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){	
-		float xcmd=0,ycmd=0,zcmd=0;
-		float yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;
-		zcmd =task_startAltitude + target_alt_m;
-		// FLY MODE flags
-		uint8_t ctrl_flag = Control::VERTICAL_POSITION;
-		while(true){
-			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
-			_vehicle->control->flightCtrl(data);
-			usleep(20000);  //20ms
-			float z_offset_remaing=_height_fusioned-task_startAltitude;
-			//check the alt is reache 
-			if(std::fabs(target_alt_m - z_offset_remaing)< vertical_threshold_in_m){
-				break;
-			}
-			//run hook function
-			LuaParser::runLuaHookFunction();
-		}
-	}else{
-	//TODO: add m100 and m600 process
-	}
-	return true;
-}
-bool FlightCore::djiMoveZToTarget(float target_alt_m){
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running move to z target, but the vehicle is not in air.",SocketPrintFd);	
-		return false;
-	}
-	return djiMoveZByOffset(target_alt_m-_height_fusioned);
-}
-/*
-*	move vehicle by target GPS point at current altitude
-*	param target_lat_deg: target point GPS latitude. unit: deg
-*	param target_lon_deg: target point GPS longitude. unit: deg
-*/
-bool FlightCore::djiMoveByGPS(double target_lat_deg,double target_lon_deg){
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Running move by gps,but the vehicle is not in air.",SocketPrintFd);	
-		return false;
-	}
-	float x_offset=0;
-	float y_offset=0;
-	//get the target point NE vector for current point
-	_get_vector_to_next_waypoint(_current_lat_lon.latitude*RAD2DEG, _current_lat_lon.longitude*RAD2DEG, target_lat_deg, target_lon_deg, &x_offset, &y_offset);
-	
-	return djiMoveX_YByOffset(x_offset,y_offset);
-}
-/* 
-*	move vehicle by the x and y offset in same alt frame:NEU
-*	parm target_x_m,target_y_m: horizontal offset 
-*	param pos_threshold_in_m: threshold for stop point
-*/
-bool FlightCore::djiMoveX_YByOffset(float target_x_m, float target_y_m, float pos_threshold_in_m){
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Runing move by x_y offset,but vehicle is not in air.",SocketPrintFd);	
-		return false;
-	}
-	//record the start point
-	TypeMap<TOPIC_GPS_FUSED>::type task_startPoint=_current_lat_lon;
-	TypeMap<TOPIC_GPS_FUSED>::type current_lat_lon;
-	
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		Telemetry::Vector3f localoffset;
-		float x_speed_factor=0;
-		float y_speed_factor=0;
-		// FLY MODE flags
-		uint8_t ctrl_flag = Control::HORIZONTAL_POSITION | Control::HORIZONTAL_GROUND | Control::VERTICAL_POSITION |Control::YAW_ANGLE | Control::STABLE_ENABLE;		
-		while(true){
-			//get the new local pos
-			getVehicleGPS(&current_lat_lon);
-			//
-			localOffsetFromGPSOffset(localoffset, static_cast<void*>(&current_lat_lon), static_cast<void*>(&task_startPoint));
-			//get the initial offset we will update in loop		
-			float x_offset_remaing=target_x_m-localoffset.x;
-			float y_offset_remaing=target_y_m-localoffset.y;
-			
-			//check reached the threshold 
-			if((std::fabs(x_offset_remaing)< pos_threshold_in_m ) && 
-			   (std::fabs(y_offset_remaing)< pos_threshold_in_m)){
-				break;
-			}
-			//run hook function
-			LuaParser::runLuaHookFunction();
-			
-			//distance to target point,
-			float distance = sqrtf(powf(x_offset_remaing,2)+powf(y_offset_remaing,2));
-			float v_factor = distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY;
-			//limit the min value
-			if(v_factor < MIN_SPEED_FACTOR){
-				v_factor=MIN_SPEED_FACTOR;
-			}
-			if(distance>0.01){
-				x_speed_factor=v_factor*(x_offset_remaing/distance);
-				y_speed_factor=v_factor*(y_offset_remaing/distance);
-			}else{
-				x_speed_factor=0;
-				y_speed_factor=0;
-			}
-			float xcmd=x_speed_factor;
-			float ycmd=y_speed_factor;
-			float zcmd=_height_fusioned; // at same height fly
-			float yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z; // hold the head 
-
-			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,yaw_in_rad*RAD2DEG);
-			_vehicle->control->flightCtrl(data);
-			usleep(20000);  //20ms
-		}
-		
-		// do a emergencyBrake 
-		_vehicle->control->emergencyBrake();
-	}else{
-		//TODO: add m100 and m600
-	}
-	return true;
-}
-bool	
-FlightCore::djiMoveByBearingAndDistance(float bearing,float distance){
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Run reletive fly, but the vehicle is not in air.",SocketPrintFd);	
-		return false;
-	}
-	double lat;
-	double lon;
-	_waypoint_from_heading_and_distance(_current_lat_lon.latitude*RAD2DEG,_current_lat_lon.longitude*RAD2DEG,bearing*DEG2RAD,distance,&lat,&lon);
-	return djiMoveByGPS(lat,lon);
-}
-/*
-*	move vehicle by velocity,need call this function in loop untill finished fly.frame:NEU
-*	param :vx,vy,vz: m/s
-*/
-bool  FlightCore::djiMoveByVelocity(float vx,float vy,float vz){
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Run velocity fly ,but the vehicle is not in air.",SocketPrintFd);	
-		return false;
-	}
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		_vehicle->control->velocityAndYawRateCtrl(vx,vy,vz,0);
-	}
-	return true;
-}
-/*
-*	Turn Vehicle head to target value
-*	param target_head_deg: target head. uint: deg
-*	param yaw_threshold_in_deg: threshold value. default:1 deg
-*/
-bool FlightCore::djiTurnHead(float target_head_deg,float yaw_threshold_in_deg){
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Run turn head,but  the vehicle is not in air.",SocketPrintFd);	
-		return false;
-	}
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		float xcmd=0,ycmd=0;
-		float zcmd=_height_fusioned;
-		// FLY MODE flags <note>: this need z control or alt maybe change ,because turn head 
-		uint8_t ctrl_flag = Control::YAW_ANGLE | Control::VERTICAL_POSITION;
-		while(true){
-			Control::CtrlData data(ctrl_flag,xcmd,ycmd,zcmd,target_head_deg);
-			_vehicle->control->flightCtrl(data);
-			usleep(20000);  //20ms
-			float current_yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;	
-			//check if finished turn head
-			if(std::fabs(current_yaw_in_rad*RAD2DEG-target_head_deg) < yaw_threshold_in_deg){
-				break;	
-			}
-			//run hook function
-			LuaParser::runLuaHookFunction();
-		}
-	}else{
-		//TODO: add m100 and m600
-	}
-	return true;
-}
-/*
-*	move vehicle by offset pos and yaw 
-*	control vehicle fly to target point and target head
-*	param: x_offset_Desired,y_offset_Desired,z_offset_Desired: uint: m
-*	param: yaw_Desired:unit: deg
-*	param: pos_threshold_in_m,the threshold of target point,when in the threshold we stop control vehile fly. unit: m
-*	param: yaw_threshold_in_deg,the yaw threshold. unit:deg
-*/
-bool FlightCore::djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desired ,float z_offset_Desired, float yaw_Desired,float pos_threshold_in_m,float yaw_threshold_in_deg){
-	
-	if(_flightStatus != VehicleStatus::FlightStatus::IN_AIR){
-		DWAR(__FILE__,__LINE__,"Run the move by pos offset,but vehicle is not in air",SocketPrintFd);	
-		return false;
-	}
-	Telemetry::Vector3f localoffset;
-	//record the start point
-	TypeMap<TOPIC_GPS_FUSED>::type 		task_startPoint		=_current_lat_lon;
-	TypeMap<TOPIC_HEIGHT_FUSION>::type 	task_startAltitude	=_height_fusioned;
-	if(!_vehicle->isM100() && !_vehicle->isLegacyM600()){
-		float x_speed_factor=0;
-		float y_speed_factor=0;
-		float z_speed_factor=0;
-		double yaw_threshold_in_rad	=	DEG2RAD * yaw_threshold_in_deg;
-		double yaw_desired_rad      =   DEG2RAD * yaw_Desired;
-		while(true){ 		
-			localOffsetFromGPSOffset(localoffset, static_cast<void*>(&_current_lat_lon), static_cast<void*>(&task_startPoint));
-			localoffset.z=_height_fusioned-task_startAltitude;
-			//get the initial offset we will update in loop		
-			double x_offset_remaing=x_offset_Desired-localoffset.x;
-			double y_offset_remaing=y_offset_Desired-localoffset.y;
-			double z_offset_remaing=z_offset_Desired-localoffset.z;
-			//current the head		
-			double yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;
-			//checke if finished control
-			if(std::fabs(x_offset_remaing)< pos_threshold_in_m &&
-			   std::fabs(y_offset_remaing)< pos_threshold_in_m &&
-			   std::fabs(z_offset_remaing)< 0.5 &&
-			   std::fabs(yaw_in_rad-yaw_desired_rad) < yaw_threshold_in_rad){
-				break;
-			}
-			//run hook function
-			LuaParser::runLuaHookFunction();
-			
-			float distance=sqrtf(powf(x_offset_remaing,2) + powf(y_offset_remaing,2) + powf(z_offset_remaing,2));
-			float v_factor=distance > BREAK_BOUNDARY? MAX_SPEED_FACTOR : distance/BREAK_BOUNDARY;
-			if(v_factor < MIN_SPEED_FACTOR){
-				v_factor=MIN_SPEED_FACTOR;
-			}
-			if(distance > 0.01){
-				x_speed_factor=v_factor*(x_offset_remaing/distance);
-				y_speed_factor=v_factor*(y_offset_remaing/distance);
-				z_speed_factor=v_factor*(z_offset_remaing/distance);
-			}else{
-				x_speed_factor=0;
-				y_speed_factor=0;
-				z_speed_factor=0;
-			}
-			float xcmd=x_speed_factor;
-			float ycmd=y_speed_factor;
-			float zcmd =_height_fusioned +z_speed_factor;
-			
-			//send the control cmd to vehicle fc
-			_vehicle->control->positionAndYawCtrl(xcmd,ycmd,zcmd,yaw_Desired);			
-			usleep(20000);  //20ms
-		}
-		// do a emergencyBrake 
-		_vehicle->control->emergencyBrake();		
-	}else{
-		//TODO: add m600 and m100 process code	
-	}
-	return true;
-}
-/*
-* hover the dji vehicle to current pos
-*/
-bool
-FlightCore::djiHover(){
-	if(_flightStatus == VehicleStatus::FlightStatus::IN_AIR){
-		//vehicle in air set pos offset 0,0,0 and velocity 0,0,0 and head to current head
-		float current_yaw_in_rad=toEulerAngle(static_cast<void*>(&_quaternion)).z;
-		djiMoveByPosOffset(0,0,0,current_yaw_in_rad*RAD2DEG);
-		djiMoveByVelocity(0,0,0);
-	}
-	return true;
-}
 bool FlightCore::djiArmMotor(){
 	char func[50];
 	ACK::ErrorCode cmd_status = _vehicle->control->armMotors(1);
