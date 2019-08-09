@@ -23,6 +23,9 @@ public:
 	
 	/*constructor*/	
 	LuaInterface();
+	/*Do not allow copy and =*/
+	LuaInterface(const LuaInterface&)=delete;
+	LuaInterface& operator=(const LuaInterface&)=delete;
 	/*destructor*/
 	~LuaInterface();
 		

@@ -19,9 +19,6 @@ bool 		 FlightLog::_thread_need_exit=false;
 std::mutex*  FlightLog::_write_log_mutex=nullptr;
 std::string  FlightLog::_log_buff="";
 
-FlightLog::FlightLog(){
-
-}
 FlightLog::~FlightLog(){
 	FlightLogStop();
 }

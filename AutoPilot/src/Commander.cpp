@@ -11,7 +11,7 @@
 #include "Commander.h"
 #include "EventManage.h"
 #include "Message.h"
-
+#include "Matrice200.h"
 ConsoleServer* Commander::_console_server=nullptr;	
 LinuxSetup* Commander::_linux_setup=nullptr;
 FlightCore* Commander::_flight_core=nullptr;
@@ -60,8 +60,8 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		DERR("Flight log init err!");
 		exit(1);
 	}
-	// creat a lua parser.
-	_lua_parser		=new LuaParser();
+	// get a lua parser.
+	_lua_parser		=LuaParser::getLuaParserInstance();//new LuaParser();
 	if(_lua_parser == nullptr){
 		DERR("Creat lua parser err!");
 		exit(1);
@@ -96,7 +96,13 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		exit(1);
 	}
 	
-	_flight_core	=new FlightCore();
+	if(_linux_setup->getVehicle()->isM100()){
+		_flight_core=nullptr;// do not support for now
+	}else if(_linux_setup->getVehicle()->isLegacyM600()){
+		_flight_core=nullptr;// do not support for now
+	}else{
+		_flight_core	=new Matrice200();
+	}
 	if(_flight_core == nullptr ){
 		DERR("Creat flight core err!");
 		exit(1);

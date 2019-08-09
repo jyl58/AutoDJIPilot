@@ -3,7 +3,6 @@
 * @author: JYL
 * @email:jiyingliang369@126.com
 * @date: 2019.06.10
-*
 */
 #include <fstream>
 #include <iostream>
@@ -36,9 +35,13 @@ const reg_lua_function_t LuaParser::reg_tabe[]={
 	{"LuaGetGimbalAngle",&LuaInterface::LuaGetGimbalAngle},
 	{"LuaTestMotor",&LuaInterface::LuaTestMotor}
 };
+LuaParser* LuaParser::getLuaParserInstance(){
+	return new LuaParser();
+}
 LuaParser::LuaParser(){
 	if(!LuaParserInit()){
-		DDBUG("Lua Parser creat err.");
+		DERR("Lua Parser init err.");
+		exit(1);
 	}
 }
 

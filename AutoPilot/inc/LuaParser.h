@@ -14,10 +14,12 @@ typedef struct {
 class FlightCore;
 class LuaParser{
 public:
-	/*constructor*/
-	LuaParser();
+	/*Do not allow copy or =*/
+	LuaParser(const LuaParser&)=delete;
+	LuaParser& operator=(const LuaParser&)=delete;
 	/*destructor*/
 	~LuaParser();
+	static LuaParser* getLuaParserInstance();
 	/*parser init funcion*/	
 	bool LuaParserInit();
 	/*open lua script */
@@ -38,6 +40,8 @@ public:
 	static void runLuaHookFunction();
 	
 private:
+	/*constructor*/
+	LuaParser();
 	/*lua run thread*/
 	void LuaParserRunThread();
 	/*flight core*/	

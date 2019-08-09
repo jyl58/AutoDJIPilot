@@ -17,7 +17,9 @@
 #endif
 class FlightLog{
 public:
-		FlightLog();
+		FlightLog(){};
+		FlightLog(const FlightLog&)=delete;
+		FlightLog& operator=(const FlightLog&)=delete;
 		~FlightLog();
 		static bool FlightLogInit();
 		static void FlightLogStop();

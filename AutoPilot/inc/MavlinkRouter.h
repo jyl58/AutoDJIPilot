@@ -1,3 +1,10 @@
+/*
+* @file MavlinkRouter.h
+* @author: JYL
+* @email:jiyingliang369@126.com
+* @date: 2019.06.10
+*
+*/
 #pragma once
 #include <thread>
 #include <mutex>

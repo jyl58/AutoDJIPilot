@@ -36,7 +36,8 @@ typedef struct CMDFUNCTION{
 
 class Commander{
 public:
-	Commander(){}
+	Commander(const Commander&)=delete;
+	Commander& operator =(const Commander&)=delete;
 	~Commander(){}
 	static void AutopilotSystemInit(const std::string& config_file_path);
 	static void AutopilotSystemExit();
@@ -46,6 +47,8 @@ public:
 	static bool tcp_link_need_disconnect;
 
 private:
+	//Do not allow construct
+	Commander(){}
 	static void HelpCommandCMD();
 	static void ZoomCamera();
 	static void	LoadPayloadPlugin();

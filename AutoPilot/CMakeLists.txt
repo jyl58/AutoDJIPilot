@@ -30,6 +30,7 @@ inc/
 inc/linux/
 inc/utilize/
 inc/dev/
+inc/vehicle/
 ../lib/
 ../lib/c_library_v2/
 ../lib/c_library_v2/ardupilotmega/
@@ -51,6 +52,7 @@ src/linux/LinuxEnvironment.cpp
 src/dev/InterfaceSerial.cpp
 src/utilize/geo.cpp
 src/utilize/Message.cpp
+src/vehicle/Matrice200.cpp
 src/LuaParser.cpp
 src/FlightCore.cpp
 src/LuaInterface.cpp

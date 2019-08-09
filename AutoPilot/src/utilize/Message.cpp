@@ -1,3 +1,10 @@
+/*
+* @file Message.cpp
+* @author: JYL
+* @email:jiyingliang369@126.com
+* @date: 2019.08.1
+*
+*/
 #include "Message.h"
 void DWAR(std::string warn_file,int line ,std::string msg,int fd){
 														
