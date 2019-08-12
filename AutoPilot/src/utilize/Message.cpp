@@ -6,6 +6,11 @@
 *
 */
 #include "Message.h"
+void DERR(std::string warn_file,int line ,std::string msg){			
+	std::string err_message=warn_file.substr(warn_file.find_last_of("/")+1)+": "+std::to_string(line)+": "+ msg;
+	FLIGHTLOG("[ERR]"+err_message);										
+	throw warn_file.substr(warn_file.find_last_of("/")+1)+": "+std::to_string(line)+": "+ msg;
+}	
 void DWAR(std::string warn_file,int line ,std::string msg,int fd){
 														
 	std::string warn_message="[WAR]"+warn_file.substr(warn_file.find_last_of("/")+1)+": "+std::to_string(line)+": "+ msg;

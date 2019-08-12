@@ -35,7 +35,7 @@ void LinuxSetup::setupEnvironment(LuaParser* lua_parser_pointer,const std::strin
 	if (!dji_config_file_path.empty()){
 		std::ifstream config_file_handle(dji_config_file_path);
 		if (!config_file_handle.is_open()){
-			DERR("User configuration file not open.");
+			DERR(__FILE__,__LINE__,"User configuration file not open.");
 		}
 		config_file_handle.close();
 	}
@@ -43,7 +43,7 @@ void LinuxSetup::setupEnvironment(LuaParser* lua_parser_pointer,const std::strin
 	this->environment = new LinuxEnvironment(lua_parser_pointer,dji_config_file_path);
 	if (!environment->getConfigResult()){
     // We were unable to read the config file. Exit.
-    	DERR("User configuration file is not correctly formatted.");
+    	DERR(__FILE__,__LINE__,"User configuration file is not correctly formatted.");
 	}
 }
 

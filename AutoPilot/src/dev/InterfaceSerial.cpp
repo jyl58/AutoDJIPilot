@@ -14,7 +14,7 @@ InterfaceSerial::InterfaceSerial(const char* portname, int speed)
 {
     _fd = ::open(portname, (O_RDWR | O_NOCTTY | O_SYNC));
 	if (_fd < 0){
-		DERR("ubable open the port.");
+		DERR(__FILE__,__LINE__,"unbable open the port.");
 		return;
     }
     SetupSerial(_fd, speed, 8, 1, 'N');
@@ -106,7 +106,7 @@ int InterfaceSerial::SetupSerial(int fdes,int baud,int databits,int stopbits,int
 
 	/* Get the current options */
 	if (tcgetattr(fdes,&options) < 0) {
-		DERR("SetupSerial 1");
+		DERR(__FILE__,__LINE__,"SetupSerial 1");
 		return (FALSE);
 	}
 
@@ -150,7 +150,7 @@ int InterfaceSerial::SetupSerial(int fdes,int baud,int databits,int stopbits,int
 	}
 
 	if (n != 0) {
-		DERR("SetupSerial 2");
+		DERR(__FILE__,__LINE__,"SetupSerial 2");
 		return(FALSE);
 	}
 

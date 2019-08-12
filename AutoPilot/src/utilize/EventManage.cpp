@@ -11,7 +11,7 @@ bool EventManage::EventManageInit(){
 	
 	_event_manage_thread=new std::thread(&EventManage::EventManageThread);
 	if(_event_manage_thread==nullptr){
-		DERR("Creat event manage err.")
+		DERR(__FILE__,__LINE__,"Creat event manage err.");
 		return false;
 	}
 	return true;

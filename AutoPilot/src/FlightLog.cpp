@@ -63,15 +63,6 @@ void FlightLog::writeLogBuffer(const std::string& log_context){
 	_write_log_mutex->unlock();
 }
 
-void FlightLog::writeLogBufferWithLabel(const std::string& log_context){
-	std::string label;
-	label.append("[WAR](");
-	label.append(__FUNCTION__);
-	label.append(")(");
-	label.append(std::to_string(__LINE__));
-	label.append(")");
-	writeLogBuffer(label+log_context);
-}
 void FlightLog::writeLogThread(){
 	//creat a file in current directory	
 	time_t now_raw_time;
@@ -87,14 +78,14 @@ void FlightLog::writeLogThread(){
 	//creat a log dirctory  at current directory if not exist
 	if(access(log_path.c_str(),W_OK|R_OK) !=0 ){
 		if(mkdir(log_path.c_str(), S_IRWXU | S_IXGRP |S_IRGRP |S_IROTH | S_IXOTH) !=0){
-			DERR("Log directory creat fail.");
+			DERR(__FILE__,__LINE__,"Log directory creat fail.");
 		}
 	}
 	// file absolute path
 	std::string log_file_path=log_path+log_name;
 	std::ofstream log_file_handle(log_file_path.c_str(),std::ofstream::out);
 	if(!log_file_handle.is_open()){
-		DERR("Open Flight Log err.");
+		DERR(__FILE__,__LINE__,"Open Flight Log err.");
 		return;
 	}
 	FLIGHTLOG("Start run flight log Thread...");

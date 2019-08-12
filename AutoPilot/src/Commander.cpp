@@ -57,25 +57,21 @@ void
 Commander::AutopilotSystemInit(const std::string& config_file_path){
 	//first  init log sub thread for record sys message
 	if(!FlightLog::FlightLogInit()){
-		DERR("Flight log init err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Flight log init err!");
 	}
 	// get a lua parser.
 	_lua_parser		=LuaParser::getLuaParserInstance();//new LuaParser();
 	if(_lua_parser == nullptr){
-		DERR("Creat lua parser err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Creat lua parser err!");
 	}
 	//creat a liux enviroment init instance.
 	_linux_setup	=new LinuxSetup(_lua_parser,config_file_path);
 	if(_linux_setup == nullptr){
-		DERR("Creat linux setup instance err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Creat linux setup instance err!");
 	}
 	// int flight mavlink router thread	
 	if (!MavlinkRouter::MavlinkRouterInit(_linux_setup->getMAVlinkDevPort().c_str(),_linux_setup->getMAVlinkDevPortBaudrate())){
-		DERR("Mavlink router init err!");
-		exit(1);	
+		DERR(__FILE__,__LINE__,"Mavlink router init err!");
 	}
 #ifdef OFFLINE_DEBUG
 #else		
@@ -92,8 +88,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	if(try_count>=10){
 		delete _linux_setup;
 		_linux_setup=nullptr;
-		DERR("Connect to vehicle err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Connect to vehicle err!");
 	}
 	
 	if(_linux_setup->getVehicle()->isM100()){
@@ -104,32 +99,27 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		_flight_core	=new Matrice200();
 	}
 	if(_flight_core == nullptr ){
-		DERR("Creat flight core err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Creat flight core err!");
 	}
 	if(!_flight_core->flightCoreInit(_linux_setup->getVehicle())){
 		delete _flight_core;
 		_flight_core=nullptr;
-		DERR("Flight core init err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Flight core init err!");
 	}
 	LuaInterface::_flight_core =_flight_core;
 #endif
 	//creat a consoler server for remote cmd 
 	_console_server=new ConsoleServer();
 	if(_console_server == nullptr){
-		DERR("Flight Console creat err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Flight Console creat err!");
 	}
 	if(!_console_server->ConsoleServerInit()){
 		delete _console_server;
 		_console_server=nullptr;
-		DERR("Flight Console Server init err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Flight Console Server init err!");
 	}
 	if(!EventManage::EventManageInit()){
-		DERR("Event Manage init err!");
-		exit(1);
+		DERR(__FILE__,__LINE__,"Event Manage init err!");
 	}
 }
 void 

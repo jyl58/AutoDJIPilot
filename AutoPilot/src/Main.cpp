@@ -26,8 +26,16 @@ bool main_thread_need_exit=false;
 */
 int main(int argc, char** argv){
 	//init commander system
-	Commander::AutopilotSystemInit(argv[1]);
-	
+	try{
+		Commander::AutopilotSystemInit(argv[1]);
+	}catch(const std::string& err){
+		//print err msg
+		std::cout<<"[ERR]Commander init err: "<<err<<std::endl;
+		//delete the new memery
+		Commander::AutopilotSystemExit();
+		//exit run
+		exit(1);
+	}
 	std::string input;	
 	std::cout<<AutoDjiLogo;
 	while(!Commander::main_thread_need_exit){
@@ -41,13 +49,20 @@ int main(int argc, char** argv){
 		}
 		//split cmd and param
 		if(!Commander::splitCMDAndParam(input)){
-			std::cout<<"Input command format err."<<std::endl;	
+			std::cout<<"Input command format err."<<std::endl;
 			std::cout<<AutoDjiLogo;
 			continue;	
 		}
 		// run cmd
-		Commander::RunCommand();
-		std::cout<<AutoDjiLogo;
+		try{
+			Commander::RunCommand();
+			std::cout<<AutoDjiLogo;
+		}catch(const std::string& err){
+			//print err msg
+			std::cout<<"[ERR]Run command err: "<<err<<std::endl;
+			//go on next 
+			continue;
+		}
 	}
 	//exit app
 	Commander::AutopilotSystemExit();

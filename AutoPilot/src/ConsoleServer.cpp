@@ -167,7 +167,12 @@ ConsoleServer::tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int eve
 		return;
 	}
 	// run cmd
-	Commander::RunCommand(client_r->fd);
+	try{
+		Commander::RunCommand(client_r->fd);
+	}catch(const std::string& err){
+		std::string err_message="[ERR]Run err:"+err;
+		send(client_r->fd,err_message.c_str(),err_message.size(),0);
+	}
 	send(client_r->fd,AutoDjiLogo.c_str(),AutoDjiLogo.size(),0);
 	if(Commander::tcp_link_need_disconnect){
 		closeLinkAndStopIoEvent(main_loop,client_r);

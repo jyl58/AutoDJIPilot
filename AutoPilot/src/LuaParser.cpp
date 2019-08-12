@@ -40,7 +40,7 @@ LuaParser* LuaParser::getLuaParserInstance(){
 }
 LuaParser::LuaParser(){
 	if(!LuaParserInit()){
-		DERR("Lua Parser init err.");
+		DERR(__FILE__,__LINE__,"Lua Parser init err.");
 		exit(1);
 	}
 }
@@ -64,7 +64,7 @@ bool LuaParser::LuaParserInit(){
 	//creat a new lua 
 	_lua=luaL_newstate();
 	if(_lua==nullptr){
-		DERR("Creat lua state err.");
+		DERR(__FILE__,__LINE__,"Creat lua state err.");
 		return false;
 	}
 	// open the lua stand lib	
@@ -191,12 +191,12 @@ LuaParser::LuaRunGoOn(const std::string& reason){
 bool
 LuaParser::LuaGettableValueByIndex(const char* table_name,int index,std::string& value){
 	if(_lua==nullptr){
-		DERR(" Lua state is nullptr!");
+		DERR(__FILE__,__LINE__," Lua state is nullptr!");
 		return false;
 	}		
 	lua_getglobal(_lua,table_name);
 	if(!lua_istable(_lua,-1)){
-		DERR("Get Lua table err!");
+		DERR(__FILE__,__LINE__,"Get Lua table err!");
 		return false;	
 	}else{
 		lua_pushinteger(_lua, index);
@@ -209,12 +209,12 @@ LuaParser::LuaGettableValueByIndex(const char* table_name,int index,std::string&
 bool
 LuaParser::LuaGettableValueByName(const char* table_name, const char* value_name, std::string& value){
 	if(_lua==nullptr){
-		DERR("Lua state is nullptr!");
+		DERR(__FILE__,__LINE__,"Lua state is nullptr!");
 		return false;
 	}		
 	lua_getglobal(_lua,table_name);
 	if(!lua_istable(_lua,-1)){
-		DERR("Get Lua table err!");
+		DERR(__FILE__,__LINE__,"Get Lua table err!");
 		return false;	
 	}else{
 		lua_pushstring(_lua, value_name);

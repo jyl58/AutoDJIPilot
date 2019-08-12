@@ -24,7 +24,6 @@ public:
 		static bool FlightLogInit();
 		static void FlightLogStop();
 		static void writeLogBuffer(const std::string& log_context);
-		static void writeLogBufferWithLabel(const std::string& log_context);
 private:
 		static void writeLogThread();
 		static std::string _log_buff;

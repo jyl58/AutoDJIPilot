@@ -21,12 +21,12 @@ bool MavlinkRouter::MavlinkRouterInit(const char *serial_port_name,int baudrate)
 	
 	_mavlink_serial=new InterfaceSerial(serial_port_name,baudrate);
 	if(_mavlink_serial == nullptr){
-		DERR("Creat serial pointer err.");	
+		DERR(__FILE__,__LINE__,"Creat serial pointer err.");	
 		return false;
 	}
 	_mavlink_router_read_thread=new std::thread(&MavlinkRouter:: mavlinkRouterReadThread);
 	if(_mavlink_router_read_thread == nullptr){
-		DERR("Creat mavlink router read thread err.");	
+		DERR(__FILE__,__LINE__,"Creat mavlink router read thread err.");	
 		return false;
 	}
 	//set send ev thread 1hz herat beat
@@ -40,7 +40,7 @@ MavlinkRouter::~MavlinkRouter(){
 
 void MavlinkRouter::sendHeartbeat(){
 	if(_mavlink_serial == nullptr){
-		DERR(" MAVlink serial is nullptr.");
+		DERR(__FILE__,__LINE__," MAVlink serial is nullptr.");
 		return;
 	}
 	mavlink_message_t mavlink_msg;
@@ -50,13 +50,13 @@ void MavlinkRouter::sendHeartbeat(){
 	mavlink_heart_beat.system_status=MAV_STATE_STANDBY; //standby
 	mavlink_msg_heartbeat_encode(SYSTEM_ID,COMPONENT_ID,&mavlink_msg,&mavlink_heart_beat);
 	if (_mavlink_serial->write_data((const uint8_t*)(&mavlink_msg),sizeof(mavlink_message_t)) == 0){
-		DERR("send heartbeat msg err.");
+		DERR(__FILE__,__LINE__,"send heartbeat msg err.");
 		return ;
 	}
 }
 void MavlinkRouter::sendLocation(double lat, double lon, float relative_alt,float vx,float vy,float vz){
 	if(_mavlink_serial == nullptr){
-		DERR(" MAVlink serial is nullptr.");
+		DERR(__FILE__,__LINE__," MAVlink serial is nullptr.");
 		return;
 	}
 	mavlink_message_t mavlink_msg;
@@ -70,7 +70,7 @@ void MavlinkRouter::sendLocation(double lat, double lon, float relative_alt,floa
 	mvalink_global_pos.vz=vz*1E2;
 	mavlink_msg_global_position_int_encode(SYSTEM_ID,COMPONENT_ID,&mavlink_msg,&mvalink_global_pos);
 	if (_mavlink_serial->write_data((const uint8_t*)(&mavlink_msg),sizeof(mavlink_message_t)) == 0){
-		DERR("send global pos msg err");
+		DERR(__FILE__,__LINE__,"send global pos msg err");
 		return ;
 	}
 }
