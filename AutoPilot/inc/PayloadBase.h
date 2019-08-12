@@ -48,9 +48,11 @@ typedef void (*luaScriptResponseCallback)(UserData userdate);
 
 class PayloadBase{
 public:
-	PayloadBase();
+	explicit PayloadBase();
+	PayloadBase(const PayloadBase&)=delete;
+	PayloadBase& operator =(const PayloadBase&)=delete;
 	virtual ~PayloadBase();
-	virtual bool init(){return false;}
+	virtual bool init()=0;
 	/*
 	*	regist payload control function by lua script call.
 	*	param lua_call_function: the control function handler ,type is luaScriptResponseCallback. 
