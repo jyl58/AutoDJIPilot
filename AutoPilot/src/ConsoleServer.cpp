@@ -22,6 +22,9 @@ struct ev_loop* ConsoleServer::_ev_loop=ev_default_loop(0);
 int ConsoleServer::_socket_fd;
 std::vector<socket_connect_t*> ConsoleServer::_connect_list;
 
+ConsoleServer* ConsoleServer::getConsoleServerIntance(){
+	return new ConsoleServer();
+}
 ConsoleServer::~ConsoleServer(){
 	//close tcp link fd and stop io and delete _io_list memery 
 	for (int i =0;i<_connect_list.size();i++){
@@ -32,6 +35,8 @@ ConsoleServer::~ConsoleServer(){
 	}
 	_connect_list.clear();
 	ev_io_stop(_ev_loop,&_tcp_listen);
+	//close the socket fd
+	close(_socket_fd);
 }
 bool 
 ConsoleServer::ConsoleServerInit(){

@@ -39,9 +39,10 @@
 class LinuxSetup
 {
 public:
-  LinuxSetup(LuaParser* lua_parser_pointer,const std::string& config_file_path, bool enableAdvancedSensing = false);
-  ~LinuxSetup();
-
+	LinuxSetup(const LinuxSetup&)=delete;
+	LinuxSetup& operator=(const LinuxSetup&)=delete;
+	~LinuxSetup();
+	static LinuxSetup* getLinuxSetupIntacne(LuaParser* lua_parser_pointer,const std::string& config_file_path);
 public:
   void setupEnvironment(LuaParser* lua_parser_pointer,const std::string& config_file_path);
   bool initVehicle();
@@ -76,7 +77,8 @@ public:
 		return environment->getBaudrate();
 	}
 private:
-	DJI::OSDK::Vehicle*              vehicle=nullptr;
+	LinuxSetup(LuaParser* lua_parser_pointer,const std::string& config_file_path, bool enableAdvancedSensing = false);
+	DJI::OSDK::Vehicle*              vehicle;
 	LinuxEnvironment*                environment;
 	DJI::OSDK::Vehicle::ActivateData activateData;
 	int                              functionTimeout; // seconds

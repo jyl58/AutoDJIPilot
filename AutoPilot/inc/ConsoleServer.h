@@ -23,11 +23,14 @@ typedef struct SOCKET_COONECT{
 }socket_connect_t;
 class ConsoleServer{
 public:
-	ConsoleServer(){}
+	ConsoleServer(const ConsoleServer&)=delete;
+	ConsoleServer& operator=(const ConsoleServer&)=delete;
 	~ConsoleServer();
 	bool ConsoleServerInit();
+	static ConsoleServer* getConsoleServerIntance();
 
 private:
+	ConsoleServer(){}
 	static void tCPAcceptCallback(struct ev_loop* main_loop, struct ev_io* sock_w,int events);
 	static void tCPRead(struct ev_loop* main_loop, struct ev_io* client_r,int events);
 	static void tCPWrite(struct ev_loop* main_loop, struct ev_io* client_w,int events);

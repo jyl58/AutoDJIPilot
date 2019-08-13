@@ -11,21 +11,23 @@
 
 using namespace DJI::OSDK;
 
-LinuxSetup::LinuxSetup(LuaParser* lua_parser_pointer,const std::string& config_file_path, bool enableAdvancedSensing){
-	this->functionTimeout     = 1; // second
-	this->vehicle             = nullptr;
-	this->environment         = nullptr;
-	this->useAdvancedSensing  = enableAdvancedSensing;
-
+LinuxSetup::LinuxSetup(LuaParser* lua_parser_pointer,const std::string& config_file_path, bool enableAdvancedSensing)
+:functionTimeout(1),
+vehicle(nullptr),
+environment(nullptr),
+useAdvancedSensing(enableAdvancedSensing)
+{
 	setupEnvironment(lua_parser_pointer,config_file_path);
 }
-
+LinuxSetup* LinuxSetup::getLinuxSetupIntacne(LuaParser* lua_parser_pointer,const std::string& config_file_path){
+	return new LinuxSetup(lua_parser_pointer,config_file_path);
+}
 LinuxSetup::~LinuxSetup(){
-  if (vehicle){
+  if (vehicle != nullptr){
     delete (vehicle);
     vehicle = nullptr;
   }
-  if (environment){
+  if (environment != nullptr){
     delete (environment);
     environment = nullptr;
   }

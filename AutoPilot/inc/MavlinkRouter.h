@@ -20,7 +20,7 @@
 #define GCS_COMPONENT_ID 201
 class MavlinkRouter{
 public:
-	MavlinkRouter(){}
+	MavlinkRouter()=delete;
 	~MavlinkRouter();
 	static bool MavlinkRouterInit(const char *serial_port_name,int baudrate);
 	static void sendHeartbeat();

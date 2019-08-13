@@ -36,6 +36,8 @@ typedef struct CMDFUNCTION{
 
 class Commander{
 public:
+	//Do not allow construct
+	Commander()=delete;
 	Commander(const Commander&)=delete;
 	Commander& operator =(const Commander&)=delete;
 	~Commander(){}
@@ -47,8 +49,6 @@ public:
 	static bool tcp_link_need_disconnect;
 
 private:
-	//Do not allow construct
-	Commander(){}
 	static void HelpCommandCMD();
 	static void ZoomCamera();
 	static void	LoadPayloadPlugin();

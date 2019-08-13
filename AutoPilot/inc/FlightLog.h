@@ -17,7 +17,7 @@
 #endif
 class FlightLog{
 public:
-		FlightLog(){};
+		FlightLog()=delete;
 		FlightLog(const FlightLog&)=delete;
 		FlightLog& operator=(const FlightLog&)=delete;
 		~FlightLog();

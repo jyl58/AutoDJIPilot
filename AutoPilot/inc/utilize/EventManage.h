@@ -4,7 +4,7 @@
 
 class EventManage{
 public:
-	EventManage(){}
+	EventManage()=delete;
 	~EventManage();
 	static bool EventManageInit();
 	static void EventManageExit();
@@ -14,5 +14,4 @@ private:
 	static struct ev_loop* _ev_loop;
 	/*thread*/
 	static std::thread* _event_manage_thread;
-
 };

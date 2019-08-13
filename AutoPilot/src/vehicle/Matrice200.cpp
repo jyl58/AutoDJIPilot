@@ -6,9 +6,9 @@
 #include "geo.h"
 #include "Message.h"
 #include "Matrice200.h"
-Matrice200::Matrice200():
-FlightCore()
-{
+
+Matrice200* Matrice200::getMatrice200Intace(){
+	return new Matrice200();
 }
 /*@do a takeoff */
 bool 

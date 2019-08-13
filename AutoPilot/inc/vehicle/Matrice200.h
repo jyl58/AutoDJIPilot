@@ -8,15 +8,17 @@
 
 #pragma once
 #include "FlightCore.h"
-class Matrice200 :public FlightCore
+class Matrice200 :public FlightCore 
 {
 	public:
-		Matrice200();
+		Matrice200(const Matrice200&)=delete;
+		Matrice200& operator=(const Matrice200&)=delete;
 		~Matrice200(){};
+		static Matrice200* getMatrice200Intace();
 		bool 	djiTakeoff() override;
 		bool	djiLanding() override;
 		bool	djiGoHome() override;
-		bool 	djiHover()override;
+		bool 	djiHover() override;
 		bool 	djiMoveByGPS(double target_lat_deg,double target_lon_deg)override;
 		bool 	djiMoveByVelocity(float vx,float vy,float vz)override;
 		bool 	djiMoveZByOffset(float target_alt_m,float vertical_threshold_in_m=0.5)override;
@@ -27,5 +29,7 @@ class Matrice200 :public FlightCore
 		bool	djiMoveByPosOffset(float x_offset_Desired,float y_offset_Desired,
 								   float z_offset_Desired, float yaw_Desired,
 								   float pos_threshold_in_m=0.2,float yaw_threshold_in_deg=1.0)override;
+	private:
+		Matrice200():FlightCore(){};
 
 };

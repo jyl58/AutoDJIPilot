@@ -65,7 +65,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		DERR(__FILE__,__LINE__,"Creat lua parser err!");
 	}
 	//creat a liux enviroment init instance.
-	_linux_setup	=new LinuxSetup(_lua_parser,config_file_path);
+	_linux_setup	=LinuxSetup::getLinuxSetupIntacne(_lua_parser,config_file_path);
 	if(_linux_setup == nullptr){
 		DERR(__FILE__,__LINE__,"Creat linux setup instance err!");
 	}
@@ -96,7 +96,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	}else if(_linux_setup->getVehicle()->isLegacyM600()){
 		_flight_core=nullptr;// do not support for now
 	}else{
-		_flight_core	=new Matrice200();
+		_flight_core	=Matrice200::getMatrice200Intace();
 	}
 	if(_flight_core == nullptr ){
 		DERR(__FILE__,__LINE__,"Creat flight core err!");
@@ -109,7 +109,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 	LuaInterface::_flight_core =_flight_core;
 #endif
 	//creat a consoler server for remote cmd 
-	_console_server=new ConsoleServer();
+	_console_server=ConsoleServer::getConsoleServerIntance();
 	if(_console_server == nullptr){
 		DERR(__FILE__,__LINE__,"Flight Console creat err!");
 	}
