@@ -17,7 +17,7 @@
 
 class LinuxEnvironment{
 public:
-	LinuxEnvironment(LuaParser* lua_parser_pointer,const std::string& config_file_path);
+	LinuxEnvironment(std::shared_ptr<LuaParser> lua_parser_pointer,const std::string& config_file_path);
 	~LinuxEnvironment();
 	int                getApp_id() const;
 	const std::string& getEnc_key() const;
@@ -31,7 +31,7 @@ private:
 	/*parse the user config data by run lua script file*/
 	bool parse(const std::string& config_file_path);
 
-	LuaParser*   _luaParser;
+	std::shared_ptr<LuaParser>   _luaParser;
 	std::string  config_file_path;
 	int          app_id;
 	std::string  enc_key;

@@ -16,7 +16,7 @@
 #include "dji_control.hpp"
 #include "Message.h"
 //init static var
-DJI::OSDK::Vehicle* FlightCore::_vehicle=nullptr;
+std::shared_ptr<DJI::OSDK::Vehicle> FlightCore::_vehicle=nullptr;
 std::mutex FlightCore::_vehicle_data_mutex;
 bool FlightCore::_vehicle_rtk_avilable=false;
 TypeMap<TOPIC_STATUS_FLIGHT>::type 		FlightCore::_flightStatus;
@@ -117,7 +117,7 @@ FlightCore::djiReleaseControlAuthority(){
 	}
 	return true;
 }
-bool FlightCore::flightCoreInit(DJI::OSDK::Vehicle *vehicle){
+bool FlightCore::flightCoreInit(std::shared_ptr<DJI::OSDK::Vehicle> vehicle){
 	// init static _vehicle	
 	_vehicle=vehicle;
 	
@@ -461,7 +461,6 @@ FlightCore::getVehicleBearing(){
 	float current_head=	toEulerAngle(static_cast<void*>(&_quaternion)).z*RAD2DEG; //rad-->deg
 	return current_head;
 }
-
 
 bool FlightCore::djiArmMotor(){
 	char func[50];

@@ -42,9 +42,9 @@ public:
 	LinuxSetup(const LinuxSetup&)=delete;
 	LinuxSetup& operator=(const LinuxSetup&)=delete;
 	~LinuxSetup();
-	static LinuxSetup* getLinuxSetupIntacne(LuaParser* lua_parser_pointer,const std::string& config_file_path);
+	static std::shared_ptr<LinuxSetup> getLinuxSetupIntacne(std::shared_ptr<LuaParser> lua_parser_pointer,const std::string& config_file_path);
 public:
-  void setupEnvironment(LuaParser* lua_parser_pointer,const std::string& config_file_path);
+  void setupEnvironment(std::shared_ptr<LuaParser> lua_parser_pointer,const std::string& config_file_path);
   bool initVehicle();
 
 public:
@@ -52,7 +52,7 @@ public:
 	LinuxEnvironment* getEnvironment(){
 		return this->environment;
 	}
-	DJI::OSDK::Vehicle* getVehicle(){
+	std::shared_ptr<DJI::OSDK::Vehicle> getVehicle()const {
 		return this->vehicle;
 	}
 	DJI::OSDK::Vehicle::ActivateData* getActivateData(){
@@ -61,10 +61,10 @@ public:
 	const std::string& getMAVlinkDevPort()const{
 		return environment->getMAVlinkDevPort();
 	}
-	unsigned int getMAVlinkDevPortBaudrate(){
+	unsigned int getMAVlinkDevPortBaudrate()const{
 		return 	environment->getMAVlinkBaudrate();
 	}
-	int getDJIAppId(){
+	int getDJIAppId()const{
 		return environment->getApp_id();
 	}
 	const std::string& getDJIAppKey()const {
@@ -77,8 +77,8 @@ public:
 		return environment->getBaudrate();
 	}
 private:
-	LinuxSetup(LuaParser* lua_parser_pointer,const std::string& config_file_path, bool enableAdvancedSensing = false);
-	DJI::OSDK::Vehicle*              vehicle;
+	LinuxSetup(std::shared_ptr<LuaParser> lua_parser_pointer,const std::string& config_file_path, bool enableAdvancedSensing = false);
+	std::shared_ptr<DJI::OSDK::Vehicle>    vehicle;
 	LinuxEnvironment*                environment;
 	DJI::OSDK::Vehicle::ActivateData activateData;
 	int                              functionTimeout; // seconds

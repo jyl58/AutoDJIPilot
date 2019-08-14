@@ -63,11 +63,11 @@ private:
 	static void PrintFlightStatusCMD();
 	static void ExitSystemCMD();
 	
-	static ConsoleServer* _console_server;	
-	static LinuxSetup* _linux_setup;
-	static FlightCore* _flight_core;
-	static LuaParser* _lua_parser;
-	static PayloadBase* _payload_base;
+	static std::shared_ptr<ConsoleServer> _console_server;	
+	static std::shared_ptr<LinuxSetup> _linux_setup;
+	static std::shared_ptr<FlightCore> _flight_core;
+	static std::shared_ptr<LuaParser> _lua_parser;
+	static std::shared_ptr<PayloadBase> _payload_base;
 	
 	static const command_function_t cmd_table[];
 	static const char* cmd_description[];

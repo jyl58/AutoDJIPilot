@@ -19,7 +19,7 @@ public:
 	LuaParser& operator=(const LuaParser&)=delete;
 	/*destructor*/
 	~LuaParser();
-	static LuaParser* getLuaParserInstance();
+	static std::shared_ptr<LuaParser> getLuaParserInstance();
 	/*parser init funcion*/	
 	bool LuaParserInit();
 	/*open lua script */

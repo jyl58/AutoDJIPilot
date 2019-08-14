@@ -11,7 +11,7 @@
 
 using namespace DJI::OSDK;
 
-LinuxSetup::LinuxSetup(LuaParser* lua_parser_pointer,const std::string& config_file_path, bool enableAdvancedSensing)
+LinuxSetup::LinuxSetup(std::shared_ptr<LuaParser> lua_parser_pointer,const std::string& config_file_path, bool enableAdvancedSensing)
 :functionTimeout(1),
 vehicle(nullptr),
 environment(nullptr),
@@ -19,13 +19,12 @@ useAdvancedSensing(enableAdvancedSensing)
 {
 	setupEnvironment(lua_parser_pointer,config_file_path);
 }
-LinuxSetup* LinuxSetup::getLinuxSetupIntacne(LuaParser* lua_parser_pointer,const std::string& config_file_path){
-	return new LinuxSetup(lua_parser_pointer,config_file_path);
+std::shared_ptr<LinuxSetup> LinuxSetup::getLinuxSetupIntacne(std::shared_ptr<LuaParser> lua_parser_pointer,const std::string& config_file_path){
+	return std::shared_ptr<LinuxSetup>(new LinuxSetup(lua_parser_pointer,config_file_path));
 }
 LinuxSetup::~LinuxSetup(){
   if (vehicle != nullptr){
-    delete (vehicle);
-    vehicle = nullptr;
+    vehicle.reset();
   }
   if (environment != nullptr){
     delete (environment);
@@ -33,7 +32,7 @@ LinuxSetup::~LinuxSetup(){
   }
 }
 
-void LinuxSetup::setupEnvironment(LuaParser* lua_parser_pointer,const std::string& dji_config_file_path){
+void LinuxSetup::setupEnvironment(std::shared_ptr<LuaParser> lua_parser_pointer,const std::string& dji_config_file_path){
 	if (!dji_config_file_path.empty()){
 		std::ifstream config_file_handle(dji_config_file_path);
 		if (!config_file_handle.is_open()){
@@ -51,10 +50,11 @@ void LinuxSetup::setupEnvironment(LuaParser* lua_parser_pointer,const std::strin
 
 bool LinuxSetup::initVehicle(){
 	bool threadSupport = true;
-	this->vehicle      = new Vehicle(environment->getDevice().c_str(),
-		                             environment->getBaudrate(),
-		                             threadSupport,
-		                             this->useAdvancedSensing);
+	this->vehicle      = std::shared_ptr<DJI::OSDK::Vehicle>(new Vehicle(environment->getDevice().c_str(),
+		                             									 environment->getBaudrate(),
+		                             									 threadSupport,
+		                             									 this->useAdvancedSensing)
+		                             						);
 
 	if(this->vehicle==nullptr){
 		FLIGHTLOG("Creat new vehile err.");
@@ -63,7 +63,7 @@ bool LinuxSetup::initVehicle(){
 	// Check if the communication is working fine
 	if (!vehicle->protocolLayer->getDriver()->getDeviceStatus()){
 		FLIGHTLOG("Communicate with DJI incorrectly.");
-		delete (vehicle);
+		this->vehicle.reset();
 		this->vehicle     = nullptr;
 		return false;
 	}
@@ -78,7 +78,7 @@ bool LinuxSetup::initVehicle(){
 	if (ACK::getError(ack)){
 		FLIGHTLOG("DJI Vehicle activate fail!");
 		ACK::getErrorCodeMessage(ack, __func__);
-		delete (vehicle);
+		this->vehicle.reset();
 		this->vehicle     = nullptr;
 		return false;
 	}else{

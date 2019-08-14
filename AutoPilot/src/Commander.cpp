@@ -12,11 +12,11 @@
 #include "EventManage.h"
 #include "Message.h"
 #include "Matrice200.h"
-ConsoleServer* Commander::_console_server=nullptr;	
-LinuxSetup* Commander::_linux_setup=nullptr;
-FlightCore* Commander::_flight_core=nullptr;
-LuaParser* Commander::_lua_parser=nullptr;
-PayloadBase* Commander::_payload_base=nullptr;
+std::shared_ptr<ConsoleServer> Commander::_console_server=nullptr;	
+std::shared_ptr<LinuxSetup> Commander::_linux_setup=nullptr;
+std::shared_ptr<FlightCore> Commander::_flight_core=nullptr;
+std::shared_ptr<LuaParser> Commander::_lua_parser=nullptr;
+std::shared_ptr<PayloadBase> Commander::_payload_base=nullptr;
 void* Commander::dynamic_lib_handler=nullptr;
 bool Commander::main_thread_need_exit=false;
 bool Commander::tcp_link_need_disconnect=false;
@@ -102,7 +102,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		DERR(__FILE__,__LINE__,"Creat flight core err!");
 	}
 	if(!_flight_core->flightCoreInit(_linux_setup->getVehicle())){
-		delete _flight_core;
+		_flight_core.reset();
 		_flight_core=nullptr;
 		DERR(__FILE__,__LINE__,"Flight core init err!");
 	}
@@ -114,8 +114,7 @@ Commander::AutopilotSystemInit(const std::string& config_file_path){
 		DERR(__FILE__,__LINE__,"Flight Console creat err!");
 	}
 	if(!_console_server->ConsoleServerInit()){
-		delete _console_server;
-		_console_server=nullptr;
+		_console_server.reset();
 		DERR(__FILE__,__LINE__,"Flight Console Server init err!");
 	}
 	if(!EventManage::EventManageInit()){
@@ -127,25 +126,23 @@ Commander::AutopilotSystemExit(){
 	// the order of decontructor is important
 	//exit the lua parser thread
 	if (_lua_parser != nullptr ){
-		delete _lua_parser;
-		_lua_parser=nullptr;
+		_lua_parser.reset();
 	}
 	//exit flight core thread
 	if(_flight_core != nullptr){
-		delete _flight_core;
+		_flight_core.reset();
 		_flight_core= nullptr;
 	}
 	//delete the setup instance
 	if(_linux_setup != nullptr) {
-		delete _linux_setup;
+		_linux_setup.reset();
 		_linux_setup= nullptr;
 	}
 	//exit the mavlink router thread
 	MavlinkRouter::stopMAVlinkThread();
 	//stop the console sever event loop
 	if( _console_server!= nullptr){
-		delete _console_server;
-		_console_server=nullptr;
+		_console_server.reset();
 	}
 	//exit the event manage thread
 	EventManage::EventManageExit();
@@ -308,7 +305,7 @@ Commander::LoadPayloadPlugin(){
 		DWAR(__FILE__,__LINE__,"Load "+_cmd_and_param.at(1)+" dynamic lib err!",SocketPrintFd);
 	}
 	// function handler
-	typedef PayloadBase* (*payload_creat)(void);
+	typedef std::shared_ptr<PayloadBase> (*payload_creat)(void);
 	payload_creat _creat_func;
 	
 	// get the user's dynamic payload control lib. 

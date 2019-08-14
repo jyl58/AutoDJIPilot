@@ -27,7 +27,7 @@ public:
 	ConsoleServer& operator=(const ConsoleServer&)=delete;
 	~ConsoleServer();
 	bool ConsoleServerInit();
-	static ConsoleServer* getConsoleServerIntance();
+	static std::shared_ptr<ConsoleServer> getConsoleServerIntance();
 
 private:
 	ConsoleServer(){}

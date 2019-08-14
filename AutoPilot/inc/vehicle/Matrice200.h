@@ -14,7 +14,7 @@ class Matrice200 :public FlightCore
 		Matrice200(const Matrice200&)=delete;
 		Matrice200& operator=(const Matrice200&)=delete;
 		~Matrice200(){};
-		static Matrice200* getMatrice200Intace();
+		static 	Matrice200* getMatrice200Intace();
 		bool 	djiTakeoff() override;
 		bool	djiLanding() override;
 		bool	djiGoHome() override;

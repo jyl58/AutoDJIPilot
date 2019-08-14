@@ -7,7 +7,7 @@
 */
 #include "linux/LinuxEnvironment.hpp"
 #include "Message.h"
-LinuxEnvironment::LinuxEnvironment(LuaParser* lua_parser_pointer,const std::string& config_file_path)
+LinuxEnvironment::LinuxEnvironment(std::shared_ptr<LuaParser> lua_parser_pointer,const std::string& config_file_path)
 :_luaParser(lua_parser_pointer)
 {
 

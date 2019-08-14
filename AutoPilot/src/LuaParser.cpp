@@ -35,8 +35,8 @@ const reg_lua_function_t LuaParser::reg_tabe[]={
 	{"LuaGetGimbalAngle",&LuaInterface::LuaGetGimbalAngle},
 	{"LuaTestMotor",&LuaInterface::LuaTestMotor}
 };
-LuaParser* LuaParser::getLuaParserInstance(){
-	return new LuaParser();
+std::shared_ptr<LuaParser> LuaParser::getLuaParserInstance(){
+	return std::shared_ptr<LuaParser>(new LuaParser());
 }
 LuaParser::LuaParser(){
 	if(!LuaParserInit()){

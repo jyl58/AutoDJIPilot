@@ -36,7 +36,7 @@ public:
 		FlightCore(const FlightCore&)=delete;
 		FlightCore& operator=(const FlightCore&)=delete;
 		virtual ~FlightCore();
-		bool 	flightCoreInit(DJI::OSDK::Vehicle* vehicle);
+		bool 	flightCoreInit(std::shared_ptr<DJI::OSDK::Vehicle> vehicle);
 		void 	exitDjiThread();
 		/*get vehicle flight data*/
 		void 	getFlightStatus(TypeMap<TOPIC_STATUS_FLIGHT>::type *flightStatus);
@@ -96,7 +96,7 @@ protected:
 		static void PKGIndex_4_Callback(Vehicle* vehicle,RecvContainer recvFrame,UserData usrData);
 		static void checkRCInterruptLuaRun();
 		/*pointer to Vehicle*/
-		static DJI::OSDK::Vehicle* _vehicle;
+		static std::shared_ptr<DJI::OSDK::Vehicle> _vehicle;
 		
 		static const struct PERIOD_CALL_LOOP _period_call_tabe[];
 		double* _last_run_time;

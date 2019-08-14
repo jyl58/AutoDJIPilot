@@ -22,8 +22,8 @@ struct ev_loop* ConsoleServer::_ev_loop=ev_default_loop(0);
 int ConsoleServer::_socket_fd;
 std::vector<socket_connect_t*> ConsoleServer::_connect_list;
 
-ConsoleServer* ConsoleServer::getConsoleServerIntance(){
-	return new ConsoleServer();
+std::shared_ptr<ConsoleServer> ConsoleServer::getConsoleServerIntance(){
+	return std::shared_ptr<ConsoleServer>(new ConsoleServer());
 }
 ConsoleServer::~ConsoleServer(){
 	//close tcp link fd and stop io and delete _io_list memery 

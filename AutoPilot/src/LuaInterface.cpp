@@ -16,7 +16,7 @@
 using namespace DJI::OSDK;
 using namespace DJI::OSDK::Telemetry;
 
-FlightCore* LuaInterface::_flight_core=nullptr;
+std::shared_ptr<FlightCore> LuaInterface::_flight_core=nullptr;
 bool LuaInterface::_need_go_on_run=false;
 
 LuaInterface::LuaInterface()

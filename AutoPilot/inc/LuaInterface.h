@@ -174,7 +174,7 @@ public:
 	/*******************************
 	* flight core
 	*******************************/	
-	static FlightCore * _flight_core;
+	static std::shared_ptr<FlightCore> _flight_core;
 	
 	static bool _need_go_on_run;
 };
