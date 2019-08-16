@@ -7,8 +7,10 @@
 */
 #include <stdio.h>
 #include <iostream>
+#include <cstring>
 #include "PayloadBase.h"
 #include "Message.h"
+
 // init the button response struct
 button_response_t PayloadBase::_button_response[]={
 	{BUTTON_C1,"BUTTON1",0,nullptr},
@@ -16,7 +18,8 @@ button_response_t PayloadBase::_button_response[]={
 	{BUTTON_C3,"BUTTON3",0,nullptr},
 	{BUTTON_C4,"BUTTON4",0,nullptr}
 };
-std::map<std::string,luaScriptResponseCallback>* PayloadBase::_lua_response=nullptr;
+std::shared_ptr<std::map<std::string,luaScriptResponseCallback>> PayloadBase::_lua_response=nullptr;
+PayloadBase* PayloadBase::_payload_derive=nullptr;
 
 PayloadBase::PayloadBase(){
 	//reset the button struct callback function
@@ -25,16 +28,24 @@ PayloadBase::PayloadBase(){
 	}	
 	// new a map memery from heap
 	if(_lua_response != nullptr){
-		delete _lua_response;
+		_lua_response.reset();
 		_lua_response=nullptr;
 	}
-	_lua_response=new std::map<std::string,luaScriptResponseCallback>();
+	_lua_response=std::shared_ptr<std::map<std::string,luaScriptResponseCallback>>(new std::map<std::string,luaScriptResponseCallback>());
 }
 PayloadBase::~PayloadBase(){
 	if(_lua_response != nullptr){
-		delete _lua_response;
+		_lua_response.reset();
 		_lua_response=nullptr;
 	}
+	if(_payload_derive!= nullptr){
+		delete _payload_derive;
+		_payload_derive=nullptr;
+	}
+}
+void 
+PayloadBase::registPayloadPlugin(PayloadBase* plugin){
+	_payload_derive=plugin;
 }
 bool 
 PayloadBase::registRCResponseFunction(enum BUTTON button_number,rcResponseCallback response_function,const char* button_name){
@@ -50,7 +61,7 @@ PayloadBase::registRCResponseFunction(enum BUTTON button_number,rcResponseCallba
 		DWAR(__FILE__,__LINE__,"button"+std::to_string(button_number)+"already regist callback function");
 	}
 	_button_response[button_number]._number	=button_number;
-	memcpy(_button_response[button_number]._name, button_name,10);
+	std::memcpy(_button_response[button_number]._name, button_name,10);
 	_button_response[button_number]._func	=response_function;
 	return true;
 }
@@ -73,11 +84,11 @@ PayloadBase::runRcFunction(DJI::OSDK::Telemetry::TypeMap<DJI::OSDK::Telemetry::T
 	}
 }
 int16_t 
-PayloadBase::getRCValueByNumber(enum BUTTON button_number){
+PayloadBase::getRCValueByNumber(enum BUTTON button_number)const{
 	return _button_response[button_number]._value;
 }
 int16_t 
-PayloadBase::getRCValueByName(const std::string& button_name){
+PayloadBase::getRCValueByName(const std::string& button_name)const{
 	for(int i=0;i<MAX_BUTTON; i++){	
 		if(	button_name.compare(_button_response[i]._name) == 0){
 			return _button_response[i]._value;
@@ -85,8 +96,6 @@ PayloadBase::getRCValueByName(const std::string& button_name){
 	}
 	return 0;
 }
-
-
 /*
 *	regist lua call function
 */

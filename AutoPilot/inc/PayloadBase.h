@@ -11,8 +11,9 @@
 *	Payload support RC and lua script control,user need regist response function in init().
 */
 #pragma once
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <string>
+#include <memory>
 #include <map>
 #include "dji_telemetry.hpp"
 #define MAX_BUTTON 4
@@ -52,6 +53,11 @@ public:
 	PayloadBase(const PayloadBase&)=delete;
 	PayloadBase& operator =(const PayloadBase&)=delete;
 	virtual ~PayloadBase();
+	/*	regist derive payload to base static */
+	static void registPayloadPlugin(PayloadBase* plugin);
+	/*	get derive payload calss*/
+	static PayloadBase* getDeriveInstance(){return _payload_derive;}
+	/*	init for derive class regist the rc backcall or lua call function*/
 	virtual bool init()=0;
 	/*
 	*	regist payload control function by lua script call.
@@ -79,11 +85,11 @@ public:
 	/*
 	*	get RC value by button number (1,2,3,4)
 	*/
-	int16_t getRCValueByNumber(enum BUTTON button_number);
+	int16_t getRCValueByNumber(enum BUTTON button_number)const;
 	/*
 	*	get RC value by button name
 	*/
-	int16_t getRCValueByName(const std::string& button_name);
+	int16_t getRCValueByName(const std::string& button_name)const;
 private:
 	/*
 	*	struct for store user regsited rc response function info.
@@ -92,5 +98,12 @@ private:
 	/*
 	*	map for store user registd lua control function info.
 	*/
-	static std::map<std::string,luaScriptResponseCallback> *_lua_response;
+	static std::shared_ptr<std::map<std::string,luaScriptResponseCallback>> _lua_response;
+	/*
+	*	usd record the derive payload class 
+	*/
+	static PayloadBase* _payload_derive;
 };
+
+
+

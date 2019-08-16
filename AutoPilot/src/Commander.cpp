@@ -16,7 +16,7 @@ std::shared_ptr<ConsoleServer> Commander::_console_server=nullptr;
 std::shared_ptr<LinuxSetup> Commander::_linux_setup=nullptr;
 std::shared_ptr<FlightCore> Commander::_flight_core=nullptr;
 std::shared_ptr<LuaParser> Commander::_lua_parser=nullptr;
-std::shared_ptr<PayloadBase> Commander::_payload_base=nullptr;
+PayloadBase* Commander::_payload_base=nullptr;
 void* Commander::dynamic_lib_handler=nullptr;
 bool Commander::main_thread_need_exit=false;
 bool Commander::tcp_link_need_disconnect=false;
@@ -149,8 +149,9 @@ Commander::AutopilotSystemExit(){
 	//last: exit the log thread
 	FlightLog::FlightLogStop();
 	//close the dynamic lib
-	if(dynamic_lib_handler != nullptr)
+	if(dynamic_lib_handler != nullptr){
 		dlclose(dynamic_lib_handler);
+	}
 }
 /*
 *	used to split the user input to cmd and param
@@ -296,16 +297,18 @@ Commander::LoadPayloadPlugin(){
 		return;
 	}
 	//close if there is a plugin
-	if(dynamic_lib_handler != nullptr)
+	if(dynamic_lib_handler != nullptr){
 		dlclose(dynamic_lib_handler);
-
+	}
+	
 	// open the user payload control plugin .so  
 	dynamic_lib_handler=dlopen(_cmd_and_param.at(1).c_str(),RTLD_NOW);
 	if(!dynamic_lib_handler){
-		DWAR(__FILE__,__LINE__,"Load "+_cmd_and_param.at(1)+" dynamic lib err!",SocketPrintFd);
+		DWAR(__FILE__,__LINE__,"Load "+_cmd_and_param.at(1)+" dynamic lib err:"+dlerror(),SocketPrintFd);
+		return;
 	}
 	// function handler
-	typedef std::shared_ptr<PayloadBase> (*payload_creat)(void);
+	typedef PayloadBase* (*payload_creat)(void);
 	payload_creat _creat_func;
 	
 	// get the user's dynamic payload control lib. 
