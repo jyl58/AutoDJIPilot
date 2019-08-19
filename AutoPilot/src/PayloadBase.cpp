@@ -38,10 +38,6 @@ PayloadBase::~PayloadBase(){
 		_lua_response.reset();
 		_lua_response=nullptr;
 	}
-	if(_payload_derive!= nullptr){
-		delete _payload_derive;
-		_payload_derive=nullptr;
-	}
 }
 void 
 PayloadBase::registPayloadPlugin(PayloadBase* plugin){
@@ -53,15 +49,16 @@ PayloadBase::registRCResponseFunction(enum BUTTON button_number,rcResponseCallba
 		DWAR(__FILE__,__LINE__,"regist button number need <"+std::to_string(MAX_BUTTON));
 		return false;
 	}
-	if(sizeof(button_name)>10){
+	if(sizeof(button_name)>9){
 		DWAR(__FILE__,__LINE__,"regist button name legth  need < 10 ");
-		return false;	
+		return false;
 	}
 	if(_button_response[button_number]._func != nullptr){
 		DWAR(__FILE__,__LINE__,"button"+std::to_string(button_number)+"already regist callback function");
+		return false;
 	}
 	_button_response[button_number]._number	=button_number;
-	std::memcpy(_button_response[button_number]._name, button_name,10);
+	std::memcpy(_button_response[button_number]._name, button_name,sizeof(button_name)+1); //name + '\0'
 	_button_response[button_number]._func	=response_function;
 	return true;
 }
@@ -85,7 +82,11 @@ PayloadBase::runRcFunction(DJI::OSDK::Telemetry::TypeMap<DJI::OSDK::Telemetry::T
 }
 int16_t 
 PayloadBase::getRCValueByNumber(enum BUTTON button_number)const{
-	return _button_response[button_number]._value;
+	if((button_number < MAX_BUTTON) && (button_number>=0)){
+		return _button_response[button_number]._value;
+	}else{
+		return 0;
+	}
 }
 int16_t 
 PayloadBase::getRCValueByName(const std::string& button_name)const{
