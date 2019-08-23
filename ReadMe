@@ -8,3 +8,9 @@
 1）DJI onboard SDK
 2）mavlink
 3）lua-5.3.5
+编译:
+git clone xxx
+cd AutoDJIPilot 
+mkdir build
+cmake ..
+sudo make install 
