@@ -45,6 +45,7 @@ void MavlinkRouter::sendHeartbeat(){
 		return;
 	}
 	mavlink_message_t mavlink_msg;
+	memset(&mavlink_msg,0,sizeof(mavlink_message_t));
 	mavlink_heartbeat_t mavlink_heart_beat;
 	memset(&mavlink_heart_beat,0,sizeof(mavlink_heartbeat_t));
 	mavlink_heart_beat.type=MAV_TYPE_QUADROTOR;
@@ -61,6 +62,7 @@ void MavlinkRouter::sendLocation(double lat, double lon, float relative_alt,floa
 		return;
 	}
 	mavlink_message_t mavlink_msg;
+	memset(&mavlink_msg,0,sizeof(mavlink_message_t));
 	mavlink_global_position_int_t mvalink_global_pos;
 	memset(&mvalink_global_pos,0,sizeof(mavlink_global_position_int_t));
 	mvalink_global_pos.lat=(int32_t)lat*1E7;//deg*1e7

@@ -38,7 +38,7 @@ public:
     int read_data(uint8_t *message);
 	int read_one_data(uint8_t *message);
 	double tic();
-    int write_data(const uint8_t *data_out, int byte_count);
+    int write_data(const uint8_t *data_out,int byte_count);
 	int write_data(uint8_t data);
 
 private:

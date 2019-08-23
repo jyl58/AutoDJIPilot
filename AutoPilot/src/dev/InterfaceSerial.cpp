@@ -62,7 +62,7 @@ int InterfaceSerial::read_one_data(uint8_t *message){
 	_fd_mutex.unlock();
 	return count;
 }
-int InterfaceSerial::write_data(const uint8_t *data_out, int len){
+int InterfaceSerial::write_data(const uint8_t *data_out,int len){
 
     if (_fd != -1&& data_out!=nullptr){
 		_fd_mutex.lock();
