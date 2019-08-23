@@ -36,6 +36,7 @@ bool MavlinkRouter::MavlinkRouterInit(const char *serial_port_name,int baudrate)
 }
 MavlinkRouter::~MavlinkRouter(){
 	stopMAVlinkThread();
+	_mvalink_router_ev_loop=nullptr;
 }
 
 void MavlinkRouter::sendHeartbeat(){

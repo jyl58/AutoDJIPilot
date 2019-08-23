@@ -26,4 +26,5 @@ void EventManage::EventManageExit(){
 		delete _event_manage_thread;
 		_event_manage_thread=nullptr;
 	}
+	ev_loop_destroy(_ev_loop);
 }
