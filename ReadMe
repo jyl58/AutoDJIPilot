@@ -10,7 +10,7 @@
 	2）mavlink
 	3）lua-5.3.5
 编译:
-	git clone xxx
+	git clone https://github.com/jyl58/AutoDJIPilot.git
 	cd AutoDJIPilot 
 	mkdir build
 	cmake ..
@@ -24,8 +24,8 @@
 	5）运行日志记录；
 	6）部分飞控信息mavlink 协议路由；
 使用：
-	AutoPilot path_to/config.lua
+	sudo AutoPilot path_to/config.lua
 	说明：config.lua 为软件初始化所需要的信息脚本，包括：连接飞控的串口、波特率、DJI注册的APP开发序列号等详细见配置文件说明。
 注意：
 	1）目前该版本代码仅通过DJI Assistant2 仿真验证，未进行实际飞行测试，需谨慎使用。
-	2）目前版本仅在Nano Pi Air 开发板+ Dietpi 系统编译并测试。 
+	2）目前版本仅在Nano Pi Air 开发板+ Dietpi 系统编译并仿真测试。 
