@@ -1,6 +1,6 @@
 DJI_CONFIG={};
-DJI_CONFIG.app_id="1074282"
-DJI_CONFIG.app_key="ca2f57169e91f300cd1d1eb641bee20014998028d6f35eeed5b5a901198a7b32"
+DJI_CONFIG.app_id="xxxxxxxxxxx"
+DJI_CONFIG.app_key="xxxxxxxxxxxxxxxxxx"
 DJI_CONFIG.device_port="/dev/ttyS1"
 DJI_CONFIG.baudrate="115200"
 
